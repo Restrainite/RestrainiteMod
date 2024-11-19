@@ -1,0 +1,16 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{D289A4AF-C2CF-49E7-AA93-FBCBBC1DCA34}") = "Restrainite", "Restrainite\Restrainite.csproj", "{F9318FEE-214B-4243-BE75-9C8C3B777EBF}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{F9318FEE-214B-4243-BE75-9C8C3B777EBF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F9318FEE-214B-4243-BE75-9C8C3B777EBF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F9318FEE-214B-4243-BE75-9C8C3B777EBF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F9318FEE-214B-4243-BE75-9C8C3B777EBF}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal
