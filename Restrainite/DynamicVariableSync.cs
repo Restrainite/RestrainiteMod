@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Reflection;
 using FrooxEngine;
 using FrooxEngine.ProtoFlux;
@@ -76,8 +77,13 @@ public class DynamicVariableSync
         slot.World.Configuration.HideFromListing.Changed += onChanged;
         Action<World> worldFocused = _ => ShowOrHideRestrainiteRootSlot(slot, slot.World);
         userRoot.World.WorldManager.WorldFocused += worldFocused;
-        ModConfigurationKey.OnChangedHandler onPresetChanged =
-            _ => ShowOrHideRestrainiteRootSlot(slot, slot.World.WorldManager.FocusedWorld);
+        ModConfigurationKey.OnChangedHandler onPresetChanged = _ =>
+        {
+            if (slot.IsDestroyed || slot.IsDestroying) return;
+            slot.RunInUpdates(0, () =>
+                ShowOrHideRestrainiteRootSlot(slot, slot.World.WorldManager.FocusedWorld));
+        };
+
         _configuration.OnPresetChange += onPresetChanged;
 
         slot.OnPrepareDestroy += _ =>
@@ -101,7 +107,7 @@ public class DynamicVariableSync
     {
         return () =>
         {
-            if (slot.IsDestroyed) return;
+            if (slot.IsDestroyed || slot.IsDestroying) return;
             ResoniteMod.Msg($"Adding Restrainite DynamicVariableSpace to {slot}");
             var dynamicVariableSpace = slot.GetComponentOrAttach<DynamicVariableSpace>(
                 component => component.CurrentName == DynamicVariableSpaceName
@@ -113,8 +119,21 @@ public class DynamicVariableSync
             ResoniteMod.Msg($"Adding Restrainite slot to {slot}");
             var restrainiteSlot = slot.FindChildOrAdd(RestrainiteRootSlotName, false);
 
+            var handlerDict = new Dictionary<PreventionType, ModConfigurationKey.OnChangedHandler>();
             foreach (var preventionType in PreventionTypes.List)
+            {
+                if (_configuration.GetDisplayedPreventionTypeConfig(preventionType, out var key)) continue;
                 AddOrRemoveBoolPreventionDynamicVariable(restrainiteSlot, preventionType);
+                ModConfigurationKey.OnChangedHandler rerunUpdate = _ =>
+                {
+                    if (restrainiteSlot.IsDestroyed || restrainiteSlot.IsDestroying) return;
+                    restrainiteSlot.RunInUpdates(0,
+                        () => { AddOrRemoveBoolPreventionDynamicVariable(restrainiteSlot, preventionType); });
+                };
+                handlerDict.Add(preventionType, rerunUpdate);
+                key.OnChanged += rerunUpdate;
+            }
+
 
             OnBoolValueChanged -= SendImpulse;
             OnBoolValueChanged += SendImpulse;
@@ -125,6 +144,12 @@ public class DynamicVariableSync
 
             slot.OnPrepareDestroy += _ =>
             {
+                foreach (var handler in handlerDict)
+                {
+                    if (_configuration.GetDisplayedPreventionTypeConfig(handler.Key, out var key)) continue;
+                    key.OnChanged -= handler.Value;
+                }
+
                 OnBoolValueChanged -= SendImpulse;
                 OnStringValueChanged -= SendImpulse;
                 OnBoolValueChanged -= PreventGrabbing.OnChange;
@@ -136,7 +161,7 @@ public class DynamicVariableSync
     {
         return () =>
         {
-            if (slot.IsDestroyed) return;
+            if (slot.IsDestroyed || slot.IsDestroying) return;
             ResoniteMod.Msg($"Removing Restrainite slot from {slot}");
             var restrainiteSlot = slot.FindChild(RestrainiteRootSlotName);
             if (restrainiteSlot == null) return;
@@ -166,12 +191,9 @@ public class DynamicVariableSync
 
     private void AddOrRemoveBoolPreventionDynamicVariable(Slot restrainiteSlot, PreventionType preventionType)
     {
-        if (_configuration.GetDisplayedPreventionTypeConfig(preventionType, out var key)) return;
         var expandedName = preventionType.ToExpandedString();
         var isActive = _configuration.IsPreventionTypeEnabled(preventionType);
         var nameWithPrefix = $"{DynamicVariableSpaceName}/{expandedName}";
-
-        key.OnChanged += _ => AddOrRemoveBoolPreventionDynamicVariable(restrainiteSlot, preventionType);
 
         if (!isActive)
         {
@@ -188,6 +210,8 @@ public class DynamicVariableSync
 
                 oldSlot.RemoveAllComponents(component => component is GizmoLink);
                 oldSlot.RemoveAllComponents(component => component is DynamicValueVariable<bool> dynComponent &&
+                                                         dynComponent.VariableName == nameWithPrefix);
+                oldSlot.RemoveAllComponents(component => component is DynamicValueVariable<int> dynComponent &&
                                                          dynComponent.VariableName == nameWithPrefix);
                 if (preventionType == PreventionType.EnforceSelectiveHearing)
                     oldSlot.RemoveAllComponents(component => component is DynamicValueVariable<string> dynComponent &&
@@ -317,18 +341,24 @@ public class DynamicVariableSync
 
     private void UpdateValue(Slot restrainiteSlot, PreventionType preventionType, bool value)
     {
-        if (_configuration.UpdateValue(preventionType, value)) return;
+        restrainiteSlot.RunInUpdates(0, () =>
+        {
+            if (_configuration.UpdateValue(preventionType, value)) return;
 
-        ResoniteMod.Msg($"Value {preventionType} changed to {value}");
-        OnBoolValueChanged?.Invoke(restrainiteSlot, preventionType, value);
+            ResoniteMod.Msg($"Value {preventionType} changed to {value}");
+            OnBoolValueChanged?.Invoke(restrainiteSlot, preventionType, value);
+        });
     }
 
     private void UpdateCounter(Slot restrainiteSlot, PreventionType preventionType, int value)
     {
-        if (_configuration.UpdateCounter(preventionType, value)) return;
+        restrainiteSlot.RunInUpdates(0, () =>
+        {
+            if (_configuration.UpdateCounter(preventionType, value)) return;
 
-        ResoniteMod.Msg($"Counter {preventionType} changed to {value}");
-        OnIntegerValueChanged?.Invoke(restrainiteSlot, preventionType, value);
+            ResoniteMod.Msg($"Counter {preventionType} changed to {value}");
+            OnIntegerValueChanged?.Invoke(restrainiteSlot, preventionType, value);
+        });
     }
 
     private SyncFieldEvent<string> CreateOnValueChangeEventHandlerForSelectiveHearingList(Slot restrainiteSlot,
