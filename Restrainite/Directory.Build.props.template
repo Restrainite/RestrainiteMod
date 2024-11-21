@@ -1,0 +1,8 @@
+<Project>
+    <PropertyGroup>
+        <!-- 1. Copy this file and remove the .template extension -->
+        <!-- 2. Input the full path to your Resonite install below. Keep the tailing slash! -->
+        <ResonitePath>C:\Program Files (x86)\Steam\steamapps\common\Resonite\</ResonitePath>
+        <!-- Alternatively, provide path at build time (dotnet build -p ResonitePath="...") -->
+    </PropertyGroup>
+</Project>
