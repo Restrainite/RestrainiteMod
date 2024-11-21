@@ -13,6 +13,8 @@ public class Configuration
     private readonly Dictionary<WorldPermissionType, ModConfigurationKey<PresetChangeType>>
         _changeOnWorldPermissionChangeDict = new();
 
+    private readonly Dictionary<PreventionType, int> _currentPreventCounter = new();
+
     private readonly BitArray _currentPreventValues = new(PreventionTypes.Max, false);
 
     private readonly Dictionary<PreventionType, ModConfigurationKey<bool>> _displayedPreventionTypes = new();
@@ -40,8 +42,9 @@ public class Configuration
     public Configuration()
     {
         foreach (var presetType in PresetTypes.List)
-            _presetStore.Add(presetType,
-                new ModConfigurationKey<bool[]>($"PresetStore{presetType}", "", () => [], true));
+            _presetStore.Add(presetType, new ModConfigurationKey<bool[]>(
+                $"PresetStore{presetType}", "", () => [], true));
+        foreach (var preventionType in PreventionTypes.List) _currentPreventCounter.Add(preventionType, 0);
     }
 
     public List<string> SelectiveHearingUserIDs { get; private set; } = [];
@@ -213,6 +216,12 @@ public class Configuration
         return IsPreventionTypeEnabled(preventionType) && _currentPreventValues[(int)preventionType];
     }
 
+    internal int GetCounter(PreventionType preventionType)
+    {
+        var found = _currentPreventCounter.TryGetValue(preventionType, out var counter);
+        return IsPreventionTypeEnabled(preventionType) && found ? counter : 0;
+    }
+
     internal bool IsPreventionTypeEnabled(PreventionType preventionType)
     {
         if (GetDisplayedPreventionTypeConfig(preventionType, out var key)) return false;
@@ -225,6 +234,14 @@ public class Configuration
     {
         if (value == _currentPreventValues[(int)preventionType]) return true;
         _currentPreventValues[(int)preventionType] = value;
+        return false;
+    }
+
+    internal bool UpdateCounter(PreventionType preventionType, int value)
+    {
+        var found = _currentPreventCounter.TryGetValue(preventionType, out var counter);
+        if (!found || value == counter) return true;
+        _currentPreventCounter[preventionType] = value;
         return false;
     }
 
