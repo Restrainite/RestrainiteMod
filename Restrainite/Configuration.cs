@@ -59,8 +59,12 @@ public class Configuration
     {
         builder.Key(_presetConfig);
         builder.Key(_presetStartupConfig);
+        builder.Key(_selectiveHearingList);
+        
         foreach (var presetType in PresetTypes.List) builder.Key(_presetStore[presetType]);
+        
         _presetConfig.OnChanged += OnPresetSelected;
+        
         foreach (var preventionType in PreventionTypes.List)
         {
             var key = new ModConfigurationKey<bool>($"Allow {preventionType} Restriction",
