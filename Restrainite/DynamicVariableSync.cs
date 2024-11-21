@@ -5,6 +5,7 @@ using FrooxEngine.ProtoFlux;
 using HarmonyLib;
 using ResoniteModLoader;
 using Restrainite.Enums;
+using Restrainite.Patches;
 
 namespace Restrainite;
 
@@ -80,11 +81,14 @@ public class DynamicVariableSync(Configuration configuration)
             OnBoolValueChanged += SendImpulse;
             OnStringValueChanged -= SendImpulse;
             OnStringValueChanged += SendImpulse;
+            OnBoolValueChanged -= PreventGrabbing.OnChange;
+            OnBoolValueChanged += PreventGrabbing.OnChange;
 
             slot.OnPrepareDestroy += _ =>
             {
                 OnBoolValueChanged -= SendImpulse;
                 OnStringValueChanged -= SendImpulse;
+                OnBoolValueChanged -= PreventGrabbing.OnChange;
             };
         };
     }
