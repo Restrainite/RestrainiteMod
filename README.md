@@ -28,9 +28,10 @@ TODO: Add list of restrictions here
 2. Place [Restrainite.dll](https://github.com/SnepDrone/Restrainite/releases/latest/download/Restrainite.dll) into your 
    `rml_mods` folder. This folder should be at `C:\Program Files (x86)\Steam\steamapps\common\Resonite\rml_mods` for a 
    default install. You can create it, if it's missing.
-3. Start Resonite.
-4. Check the settings menu to customize your options.
-5. Once enabled, the options will show up as `DynamicValueVariable` components under the `Restrainite` slot in your user 
+3. If you use ResoniteModLoader, install [ResoniteModSettings](https://github.com/badhaloninja/ResoniteModSettings)
+4. Start Resonite.
+5. Check the settings menu to customize your options.
+6. Once enabled, the options will show up as `DynamicValueVariable` components under the `Restrainite` slot in your user 
    root slot.
 
 ## Why does this exist?

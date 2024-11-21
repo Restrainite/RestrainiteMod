@@ -73,6 +73,7 @@ public class Configuration
                 $"Change to Preset, if world permissions are {worldPermissionType.AsExpandedString()}",
                 "", () => worldPermissionType.Default()
             );
+            _changeOnWorldPermissionChangeDict.Add(worldPermissionType, key);
             builder.Key(key);
         }
 
@@ -209,10 +210,15 @@ public class Configuration
 
     internal bool GetValue(PreventionType preventionType)
     {
+        return IsPreventionTypeEnabled(preventionType) && _currentPreventValues[(int)preventionType];
+    }
+
+    internal bool IsPreventionTypeEnabled(PreventionType preventionType)
+    {
         if (GetDisplayedPreventionTypeConfig(preventionType, out var key)) return false;
         var configValue = false;
         var foundConfigValue = _config?.TryGetValue(key, out configValue) ?? false;
-        return foundConfigValue && configValue && _currentPreventValues[(int)preventionType];
+        return foundConfigValue && configValue;
     }
 
     internal bool UpdateValue(PreventionType preventionType, bool value)

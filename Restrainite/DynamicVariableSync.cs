@@ -62,7 +62,7 @@ public class DynamicVariableSync(Configuration configuration)
         return () =>
         {
             if (slot.IsDestroyed) return;
-            ResoniteMod.Msg($"Adding Restrainite slot to {slot}");
+            ResoniteMod.Msg($"Adding Restrainite DynamicVariableSpace to {slot}");
             var dynamicVariableSpace = slot.GetComponentOrAttach<DynamicVariableSpace>(
                 component => component.CurrentName == DynamicVariableSpaceName
             );
@@ -70,6 +70,7 @@ public class DynamicVariableSync(Configuration configuration)
             dynamicVariableSpace.SpaceName.Value = DynamicVariableSpaceName;
             dynamicVariableSpace.Persistent = false;
 
+            ResoniteMod.Msg($"Adding Restrainite slot to {slot}");
             var restrainiteSlot = slot.FindChildOrAdd(RestrainiteRootSlotName, false);
 
             foreach (var preventionType in PreventionTypes.List)
@@ -124,7 +125,7 @@ public class DynamicVariableSync(Configuration configuration)
     {
         if (configuration.GetDisplayedPreventionTypeConfig(preventionType, out var key)) return;
         var expandedName = preventionType.ToExpandedString();
-        var isActive = Restrainite.GetValue(preventionType);
+        var isActive = configuration.IsPreventionTypeEnabled(preventionType);
         var nameWithPrefix = $"{DynamicVariableSpaceName}/{expandedName}";
 
         key.OnChanged += _ => AddOrRemoveBoolPreventionDynamicVariable(restrainiteSlot, preventionType);
@@ -135,7 +136,7 @@ public class DynamicVariableSync(Configuration configuration)
             if (oldSlot == null) return;
             oldSlot.RunInUpdates(0, () =>
             {
-                var active = Restrainite.GetValue(preventionType);
+                var active = configuration.IsPreventionTypeEnabled(preventionType);
                 if (active || oldSlot.ChildrenCount != 0)
                 {
                     ResoniteMod.Warn($"Unable to remove slot {oldSlot}, {active}, {oldSlot.ChildrenCount}");
