@@ -11,7 +11,7 @@ internal class PreventSpeaking
     {
         private static void Postfix(ref bool __result)
         {
-            if (Restrainite.GetValue(PreventionType.PreventSpeaking)) __result = true;
+            if (Restrainite.IsRestricted(PreventionType.PreventSpeaking)) __result = true;
         }
     }
 }

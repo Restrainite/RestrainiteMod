@@ -57,21 +57,19 @@ public class Configuration
 
     public void DefineConfiguration(ModConfigurationDefinitionBuilder builder)
     {
+        ResoniteMod.Msg("Define configuration");
         builder.Key(_presetConfig);
         builder.Key(_presetStartupConfig);
         builder.Key(_selectiveHearingList);
-        
+
         foreach (var presetType in PresetTypes.List) builder.Key(_presetStore[presetType]);
-        
-        _presetConfig.OnChanged += OnPresetSelected;
-        
+
         foreach (var preventionType in PreventionTypes.List)
         {
             var key = new ModConfigurationKey<bool>($"Allow {preventionType} Restriction",
-                "Should others be able to control this ability.", PreventionTypeConfigDefault(preventionType));
-            key.OnChanged += PreventConfigOnChanged(preventionType);
-            _displayedPreventionTypes.Add(preventionType, key);
+                "Should others be able to control this ability.", () => false);
             builder.Key(key);
+            _displayedPreventionTypes.Add(preventionType, key);
         }
 
         foreach (var worldPermissionType in WorldPermissionTypes.List)
@@ -80,11 +78,9 @@ public class Configuration
                 $"Change to Preset, if world permissions are {worldPermissionType.AsExpandedString()}",
                 "", () => worldPermissionType.Default()
             );
-            _changeOnWorldPermissionChangeDict.Add(worldPermissionType, key);
             builder.Key(key);
+            _changeOnWorldPermissionChangeDict.Add(worldPermissionType, key);
         }
-
-        _selectiveHearingList.OnChanged += UpdateHearingUserIDs;
     }
 
     private void UpdateHearingUserIDs(object? value)
@@ -95,25 +91,16 @@ public class Configuration
             .ToList();
     }
 
-    private Func<bool> PreventionTypeConfigDefault(PreventionType preventionType)
-    {
-        return () =>
-        {
-            var presetType = PresetType.None;
-            var found = _config?.TryGetValue(_presetConfig, out presetType) ?? false;
-            if (!found) return false;
-            return presetType switch
-            {
-                PresetType.None => false,
-                PresetType.All => true,
-                _ => GetCustomStored(presetType)[(int)preventionType]
-            };
-        };
-    }
-
     public void Init(ModConfiguration? config = null)
     {
         _config = config;
+        _presetConfig.OnChanged += OnPresetSelected;
+        foreach (var displayedPreventionType in _displayedPreventionTypes)
+        {
+            displayedPreventionType.Value.OnChanged += OnPreventionTypeConfigChanged(displayedPreventionType.Key);
+        }
+        _selectiveHearingList.OnChanged += UpdateHearingUserIDs;
+        
         var presetOnStartup = _config?.GetValue(_presetStartupConfig) ?? PresetChangeType.None;
         if (presetOnStartup != PresetChangeType.DoNotChange) _config?.Set(_presetConfig, (PresetType)presetOnStartup);
 
@@ -122,23 +109,28 @@ public class Configuration
         _config?.Save(true);
     }
 
-    private ModConfigurationKey.OnChangedHandler PreventConfigOnChanged(PreventionType preventionType)
+    private ModConfigurationKey.OnChangedHandler OnPreventionTypeConfigChanged(PreventionType preventionType)
     {
         return value =>
         {
+            ResoniteMod.Msg($"Config for {preventionType} changed to {value}.");
             var boolValue = value as bool? ?? false;
             var presetType = _config?.GetValue(_presetConfig) ?? PresetType.Customized;
             switch (presetType)
             {
                 case PresetType.None when !boolValue:
+                    ResoniteMod.Msg($"Config for {preventionType} changed {presetType} to {boolValue}.");
                     return;
                 case PresetType.None:
                     SwitchToCustomized(preventionType, true);
+                    ResoniteMod.Msg($"Config for {preventionType} changed {presetType} to {boolValue}.");
                     return;
                 case PresetType.All when boolValue:
+                    ResoniteMod.Msg($"Config for {preventionType} changed {presetType} to {boolValue}.");
                     return;
                 case PresetType.All:
                     SwitchToCustomized(preventionType, false);
+                    ResoniteMod.Msg($"Config for {preventionType} changed {presetType} to {boolValue}.");
                     return;
                 case PresetType.Customized:
                 case PresetType.StoredPresetAlpha:
@@ -151,6 +143,7 @@ public class Configuration
                     customStored.Set((int)preventionType, boolValue);
                     SetCustomStored(presetType, customStored);
                     _currentPreventionTypes = customStored;
+                    ResoniteMod.Msg($"Config for {preventionType} changed {presetType} to {boolValue}.");
                     return;
             }
         };
@@ -192,19 +185,14 @@ public class Configuration
     {
         ResoniteMod.Msg($"Restrainite preset changed to {value}.");
         var selectedPreset = value as PresetType? ?? PresetType.None;
-        _currentPreventionTypes ??= GetCustomStored(selectedPreset);
-        Func<PreventionType, bool> getValueForPreventionType = value switch
-        {
-            PresetType.Customized => preventionType => _currentPreventionTypes[(int)preventionType],
-            PresetType.StoredPresetAlpha => preventionType => _currentPreventionTypes[(int)preventionType],
-            PresetType.All => _ => true,
-            PresetType.None => _ => false,
-            _ => _ => false
-        };
+        _currentPreventionTypes = GetCustomStored(selectedPreset);
         foreach (var preventionType in PreventionTypes.List)
         {
             if (GetDisplayedPreventionTypeConfig(preventionType, out var configurationKey)) continue;
-            _config?.Set(configurationKey, getValueForPreventionType(preventionType));
+            var preventionTypeValue = _currentPreventionTypes[(int)preventionType];
+            if (_config?.GetValue(configurationKey) == preventionTypeValue) continue;
+            _config?.Set(configurationKey, preventionTypeValue);
+            ResoniteMod.Msg($"{preventionType} set to {preventionTypeValue}.");
         }
     }
 
@@ -215,7 +203,7 @@ public class Configuration
         return !found || configurationKey == null;
     }
 
-    internal bool GetValue(PreventionType preventionType)
+    internal bool IsRestricted(PreventionType preventionType)
     {
         return IsPreventionTypeEnabled(preventionType) && _currentPreventValues[(int)preventionType];
     }
@@ -234,7 +222,7 @@ public class Configuration
         return foundConfigValue && configValue;
     }
 
-    internal bool UpdateValue(PreventionType preventionType, bool value)
+    internal bool UpdateRestrictionState(PreventionType preventionType, bool value)
     {
         if (value == _currentPreventValues[(int)preventionType]) return true;
         _currentPreventValues[(int)preventionType] = value;
@@ -246,6 +234,16 @@ public class Configuration
         var found = _currentPreventCounter.TryGetValue(preventionType, out var counter);
         if (!found || value == counter) return true;
         _currentPreventCounter[preventionType] = value;
+        return false;
+    }
+
+    internal bool UpdateString(PreventionType preventionType, string value)
+    {
+        if (preventionType != PreventionType.EnforceSelectiveHearing) return true;
+
+        var oldValue = SelectiveHearingUserIDsAsString;
+        if (value == oldValue) return true;
+        SelectiveHearingUserIDsAsString = value;
         return false;
     }
 

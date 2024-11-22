@@ -12,10 +12,10 @@ internal class PreventHearing
         private static float Postfix(float result, User __instance)
         {
             var userId = __instance.UserID;
-            if (userId is null) return Restrainite.GetValue(PreventionType.PreventHearing) ? 0.0f : result;
-            if (Restrainite.GetValue(PreventionType.EnforceSelectiveHearing) &&
+            if (userId is null) return Restrainite.IsRestricted(PreventionType.PreventHearing) ? 0.0f : result;
+            if (Restrainite.IsRestricted(PreventionType.EnforceSelectiveHearing) &&
                 !Restrainite.Cfg.SelectiveHearingUserIDs.Contains(userId)) return 0.0f;
-            return Restrainite.GetValue(PreventionType.PreventHearing) ? 0.0f : result;
+            return Restrainite.IsRestricted(PreventionType.PreventHearing) ? 0.0f : result;
         }
     }
 }

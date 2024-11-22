@@ -23,7 +23,17 @@ public class DynamicVariableSync
         _configuration = configuration;
         OnIntegerValueChanged += SyncIntegerToBoolean;
         OnBoolValueChanged += SyncBooleanToInteger;
+        OnBoolValueChanged += SendDynamicImpulse;
+        OnIntegerValueChanged += SendDynamicImpulse;
+        OnStringValueChanged += SendDynamicImpulse;
+        OnBoolValueChanged += PreventGrabbing.OnChange;
     }
+
+    private event Action<Slot, PreventionType, bool>? OnBoolValueChanged;
+
+    private event Action<Slot, PreventionType, int>? OnIntegerValueChanged;
+
+    private event Action<Slot, PreventionType, string>? OnStringValueChanged;
 
     private void SyncBooleanToInteger(Slot slot, PreventionType preventionType, bool value)
     {
@@ -44,28 +54,42 @@ public class DynamicVariableSync
         if (!_configuration.IsPreventionTypeEnabled(preventionType)) return;
         switch (value)
         {
-            case <= 0 when _configuration.GetValue(preventionType):
-                UpdateValue(slot, preventionType, false);
+            case <= 0 when _configuration.IsRestricted(preventionType):
+                UpdateRestrictionState(slot, preventionType, false);
                 break;
-            case > 0 when !_configuration.GetValue(preventionType):
-                UpdateValue(slot, preventionType, true);
+            case > 0 when !_configuration.IsRestricted(preventionType):
+                UpdateRestrictionState(slot, preventionType, true);
                 break;
         }
     }
 
-    private event Action<Slot, PreventionType, bool>? OnBoolValueChanged;
-
-    private event Action<Slot, PreventionType, int>? OnIntegerValueChanged;
-
-    private event Action<Slot, PreventionType, string>? OnStringValueChanged;
+    private void SendDynamicImpulse<T>(Slot restrainiteSlot, PreventionType preventionType, T value)
+    {
+        if (restrainiteSlot.IsDestroyed || restrainiteSlot.IsDestroying) return;
+        var slot = restrainiteSlot.Parent;
+        if (slot == null) return;
+        slot.RunInUpdates(0, () =>
+        {
+            if (slot.IsDestroyed || slot.IsDestroying) return;
+            if (slot.Engine.WorldManager.FocusedWorld != slot.World) return;
+            if (!_configuration.IsPreventionTypeEnabled(preventionType)) return;
+            ProtoFluxHelper.DynamicImpulseHandler.TriggerAsyncDynamicImpulseWithArgument(
+                slot, $"{DynamicVariableSpaceName} Change", true,
+                $"{preventionType.ToExpandedString()}:{typeof(T)}:{value}"
+            );
+            ProtoFluxHelper.DynamicImpulseHandler.TriggerAsyncDynamicImpulseWithArgument(
+                slot, $"{DynamicVariableSpaceName} {preventionType.ToExpandedString()}", true, value
+            );
+        });
+    }
 
     internal void InjectIntoUser(User value)
     {
         var userRoot = (LinkRef<UserRoot>)UserRootField.GetValue(value);
-        userRoot.OnTargetChange += RootChanged;
+        userRoot.OnTargetChange += OnUserRootTargetChanged;
     }
 
-    private void RootChanged(SyncRef<UserRoot> userRoot)
+    private void OnUserRootTargetChanged(SyncRef<UserRoot> userRoot)
     {
         if (userRoot.Target == null) return;
         ResoniteMod.Msg($"Restrainite root changed for {userRoot} {userRoot.Target.Slot}");
@@ -75,15 +99,16 @@ public class DynamicVariableSync
         Action<IChangeable> onChanged = _ => ShowOrHideRestrainiteRootSlot(slot, slot.World.WorldManager.FocusedWorld);
         slot.World.Configuration.AccessLevel.Changed += onChanged;
         slot.World.Configuration.HideFromListing.Changed += onChanged;
+
         Action<World> worldFocused = _ => ShowOrHideRestrainiteRootSlot(slot, slot.World);
         userRoot.World.WorldManager.WorldFocused += worldFocused;
+
         ModConfigurationKey.OnChangedHandler onPresetChanged = _ =>
         {
             if (slot.IsDestroyed || slot.IsDestroying) return;
             slot.RunInUpdates(0, () =>
                 ShowOrHideRestrainiteRootSlot(slot, slot.World.WorldManager.FocusedWorld));
         };
-
         _configuration.OnPresetChange += onPresetChanged;
 
         slot.OnPrepareDestroy += _ =>
@@ -123,24 +148,16 @@ public class DynamicVariableSync
             foreach (var preventionType in PreventionTypes.List)
             {
                 if (_configuration.GetDisplayedPreventionTypeConfig(preventionType, out var key)) continue;
-                AddOrRemoveBoolPreventionDynamicVariable(restrainiteSlot, preventionType);
+                AddOrRemoveComponents(restrainiteSlot, preventionType);
                 ModConfigurationKey.OnChangedHandler rerunUpdate = _ =>
                 {
                     if (restrainiteSlot.IsDestroyed || restrainiteSlot.IsDestroying) return;
                     restrainiteSlot.RunInUpdates(0,
-                        () => { AddOrRemoveBoolPreventionDynamicVariable(restrainiteSlot, preventionType); });
+                        () => { AddOrRemoveComponents(restrainiteSlot, preventionType); });
                 };
                 handlerDict.Add(preventionType, rerunUpdate);
                 key.OnChanged += rerunUpdate;
             }
-
-
-            OnBoolValueChanged -= SendImpulse;
-            OnBoolValueChanged += SendImpulse;
-            OnStringValueChanged -= SendImpulse;
-            OnStringValueChanged += SendImpulse;
-            OnBoolValueChanged -= PreventGrabbing.OnChange;
-            OnBoolValueChanged += PreventGrabbing.OnChange;
 
             slot.OnPrepareDestroy += _ =>
             {
@@ -149,10 +166,6 @@ public class DynamicVariableSync
                     if (_configuration.GetDisplayedPreventionTypeConfig(handler.Key, out var key)) continue;
                     key.OnChanged -= handler.Value;
                 }
-
-                OnBoolValueChanged -= SendImpulse;
-                OnStringValueChanged -= SendImpulse;
-                OnBoolValueChanged -= PreventGrabbing.OnChange;
             };
         };
     }
@@ -162,9 +175,9 @@ public class DynamicVariableSync
         return () =>
         {
             if (slot.IsDestroyed || slot.IsDestroying) return;
-            ResoniteMod.Msg($"Removing Restrainite slot from {slot}");
             var restrainiteSlot = slot.FindChild(RestrainiteRootSlotName);
             if (restrainiteSlot == null) return;
+            ResoniteMod.Msg($"Removing Restrainite slot from {slot}");
             slot.RemoveAllComponents(component => component is DynamicVariableSpace
             {
                 CurrentName: DynamicVariableSpaceName
@@ -173,179 +186,89 @@ public class DynamicVariableSync
         };
     }
 
-    private static void SendImpulse<T>(Slot restrainiteSlot, PreventionType type, T value)
+    private void AddOrRemoveComponents(Slot restrainiteSlot, PreventionType preventionType)
     {
-        var slot = restrainiteSlot.Parent;
-        slot.RunInUpdates(0, () =>
-        {
-            if (slot.IsDestroyed || slot.IsDestroying) return;
-            if (slot.Engine.WorldManager.FocusedWorld != slot.World) return;
-            ProtoFluxHelper.DynamicImpulseHandler.TriggerAsyncDynamicImpulseWithArgument(
-                slot, $"{DynamicVariableSpaceName} Change", true, $"{type.ToExpandedString()}:{value}"
-            );
-            ProtoFluxHelper.DynamicImpulseHandler.TriggerAsyncDynamicImpulseWithArgument(
-                slot, $"{DynamicVariableSpaceName} {type.ToExpandedString()}", true, value
-            );
-        });
+        if (_configuration.IsPreventionTypeEnabled(preventionType))
+            CreateComponents(restrainiteSlot, preventionType);
+        else
+            RemoveComponents(restrainiteSlot, preventionType);
     }
 
-    private void AddOrRemoveBoolPreventionDynamicVariable(Slot restrainiteSlot, PreventionType preventionType)
+    private void CreateComponents(Slot restrainiteSlot, PreventionType preventionType)
     {
+        ResoniteMod.Msg($"Creating Components for {preventionType} in {restrainiteSlot}");
         var expandedName = preventionType.ToExpandedString();
-        var isActive = _configuration.IsPreventionTypeEnabled(preventionType);
+        var slot = restrainiteSlot.FindChildOrAdd(expandedName, false);
         var nameWithPrefix = $"{DynamicVariableSpaceName}/{expandedName}";
+        slot.Tag = nameWithPrefix;
 
-        if (!isActive)
+        // Create State Component
+        var dynamicVariableBooleanComponent = new DynamicVariableComponent<bool>(preventionType, slot,
+            nameWithPrefix, _configuration.IsRestricted(preventionType),
+            value => UpdateRestrictionState(restrainiteSlot, preventionType, value));
+        OnBoolValueChanged += dynamicVariableBooleanComponent.OnInternalStateChange;
+        dynamicVariableBooleanComponent.OnDestroyed += () =>
+            OnBoolValueChanged -= dynamicVariableBooleanComponent.OnInternalStateChange;
+
+        // Create Counter Component
+        var dynamicVariableIntegerComponent = new DynamicVariableComponent<int>(preventionType, slot,
+            nameWithPrefix, _configuration.GetCounter(preventionType),
+            value => UpdateCounter(restrainiteSlot, preventionType, value));
+        OnIntegerValueChanged += dynamicVariableIntegerComponent.OnInternalStateChange;
+        dynamicVariableIntegerComponent.OnDestroyed += () =>
+            OnIntegerValueChanged -= dynamicVariableIntegerComponent.OnInternalStateChange;
+
+        // Create optional String Component
+        if (preventionType != PreventionType.EnforceSelectiveHearing) return;
+
+        var dynamicVariableStringComponent = new DynamicVariableComponent<string>(preventionType, slot,
+            nameWithPrefix, _configuration.SelectiveHearingUserIDsAsString,
+            value => UpdateString(restrainiteSlot, preventionType, value));
+        OnStringValueChanged += dynamicVariableStringComponent.OnInternalStateChange;
+        dynamicVariableIntegerComponent.OnDestroyed += () =>
+            OnStringValueChanged -= dynamicVariableStringComponent.OnInternalStateChange;
+    }
+
+    private void RemoveComponents(Slot restrainiteSlot, PreventionType preventionType)
+    {
+        ResoniteMod.Msg($"Removing Components for {preventionType} in {restrainiteSlot}");
+        var expandedName = preventionType.ToExpandedString();
+        var oldSlot = restrainiteSlot.FindChild(expandedName);
+
+        if (oldSlot == null) return;
+        if (oldSlot.IsDestroyed || oldSlot.IsDestroying) return;
+
+        if (oldSlot.ChildrenCount != 0)
         {
-            var oldSlot = restrainiteSlot.FindChild(expandedName);
-            if (oldSlot == null) return;
-            oldSlot.RunInUpdates(0, () =>
-            {
-                var active = _configuration.IsPreventionTypeEnabled(preventionType);
-                if (active || oldSlot.ChildrenCount != 0)
-                {
-                    ResoniteMod.Warn($"Unable to remove slot {oldSlot}, {active}, {oldSlot.ChildrenCount}");
-                    return;
-                }
-
-                oldSlot.RemoveAllComponents(component => component is GizmoLink);
-                oldSlot.RemoveAllComponents(component => component is DynamicValueVariable<bool> dynComponent &&
-                                                         dynComponent.VariableName == nameWithPrefix);
-                oldSlot.RemoveAllComponents(component => component is DynamicValueVariable<int> dynComponent &&
-                                                         dynComponent.VariableName == nameWithPrefix);
-                if (preventionType == PreventionType.EnforceSelectiveHearing)
-                    oldSlot.RemoveAllComponents(component => component is DynamicValueVariable<string> dynComponent &&
-                                                             dynComponent.VariableName == nameWithPrefix);
-                if (oldSlot.ComponentCount != 0)
-                {
-                    ResoniteMod.Warn($"Unable to remove slot {oldSlot}, {active}, {oldSlot.ComponentCount}");
-                    return;
-                }
-
-                oldSlot.Destroy(true);
-            });
+            ResoniteMod.Warn($"Unable to remove slot {oldSlot.Name}, {oldSlot.ChildrenCount}");
             return;
         }
 
-        restrainiteSlot.RunInUpdates(0, () =>
+        var nameWithPrefix = $"{DynamicVariableSpaceName}/{expandedName}";
+        oldSlot.RemoveAllComponents(component => component is GizmoLink);
+        oldSlot.RemoveAllComponents(component => component is DynamicValueVariable<bool> dynComponent &&
+                                                 dynComponent.VariableName == nameWithPrefix);
+        oldSlot.RemoveAllComponents(component => component is DynamicValueVariable<int> dynComponent &&
+                                                 dynComponent.VariableName == nameWithPrefix);
+        if (preventionType == PreventionType.EnforceSelectiveHearing)
+            oldSlot.RemoveAllComponents(component => component is DynamicValueVariable<string> dynComponent &&
+                                                     dynComponent.VariableName == nameWithPrefix);
+        if (oldSlot.ComponentCount != 0)
         {
-            var slot = restrainiteSlot.FindChildOrAdd(expandedName, false);
-            slot.Tag = nameWithPrefix;
+            ResoniteMod.Warn($"Unable to remove slot {oldSlot.Name}, {oldSlot.ComponentCount}");
+            return;
+        }
 
-            CreateBoolDynVarComponent(restrainiteSlot, preventionType, slot, nameWithPrefix);
-            CreateIntegerDynVarComponent(restrainiteSlot, preventionType, slot, nameWithPrefix);
-
-            if (preventionType == PreventionType.EnforceSelectiveHearing)
-                CreateSelectiveHearingListDynVar(
-                    restrainiteSlot,
-                    slot,
-                    nameWithPrefix);
-        });
+        oldSlot.Destroy(true);
     }
 
-    private void CreateBoolDynVarComponent(Slot restrainiteSlot, PreventionType preventionType, Slot slot,
-        string nameWithPrefix)
-    {
-        var component = slot.GetComponentOrAttach<DynamicValueVariable<bool>>(out var attached,
-            search => search.VariableName.Value == nameWithPrefix);
-        if (!attached) return;
-
-        component.VariableName.Value = nameWithPrefix;
-        component.Value.Value = _configuration.GetValue(preventionType);
-        component.Persistent = false;
-
-        SyncFieldEvent<bool> onValueChangeHandler = field =>
-        {
-            UpdateValue(restrainiteSlot, preventionType, field.Value);
-        };
-
-        component.Value.OnValueChange += onValueChangeHandler;
-
-        var resyncEventHandler = CreateResyncEventHandler(preventionType, component);
-
-        OnBoolValueChanged += resyncEventHandler;
-
-        component.Destroyed += _ =>
-        {
-            component.Value.OnValueChange -= onValueChangeHandler;
-            OnBoolValueChanged -= resyncEventHandler;
-        };
-    }
-
-    private void CreateIntegerDynVarComponent(Slot restrainiteSlot, PreventionType preventionType, Slot slot,
-        string nameWithPrefix)
-    {
-        var component = slot.GetComponentOrAttach<DynamicValueVariable<int>>(out var attached,
-            search => search.VariableName.Value == nameWithPrefix);
-        if (!attached) return;
-
-        component.VariableName.Value = nameWithPrefix;
-        component.Value.Value = _configuration.GetCounter(preventionType);
-        component.Persistent = false;
-
-        SyncFieldEvent<int> onValueChangeHandler = field =>
-        {
-            UpdateCounter(restrainiteSlot, preventionType, field.Value);
-        };
-
-        component.Value.OnValueChange += onValueChangeHandler;
-
-        var resyncEventHandler = CreateResyncEventHandler(preventionType, component);
-
-        OnIntegerValueChanged += resyncEventHandler;
-
-        component.Destroyed += _ =>
-        {
-            component.Value.OnValueChange -= onValueChangeHandler;
-            OnIntegerValueChanged -= resyncEventHandler;
-        };
-    }
-
-
-    private void CreateSelectiveHearingListDynVar(Slot restrainiteSlot, Slot slot, string nameWithPrefix)
-    {
-        var component = slot.GetComponentOrAttach<DynamicValueVariable<string>>(out var attached,
-            search => search.VariableName.Value == nameWithPrefix);
-        if (!attached) return;
-
-        component.VariableName.Value = nameWithPrefix;
-        component.Value.Value = _configuration.SelectiveHearingUserIDsAsString;
-        component.Persistent = false;
-
-        var onValueChangeHandler = CreateOnValueChangeEventHandlerForSelectiveHearingList(restrainiteSlot,
-            PreventionType.EnforceSelectiveHearing);
-
-        component.Value.OnValueChange += onValueChangeHandler;
-
-        var resyncEventHandler = CreateResyncEventHandler(PreventionType.EnforceSelectiveHearing, component);
-        OnStringValueChanged += resyncEventHandler;
-
-        component.Destroyed += _ =>
-        {
-            component.Value.OnValueChange -= onValueChangeHandler;
-            OnStringValueChanged -= resyncEventHandler;
-        };
-    }
-
-
-    private static Action<Slot, PreventionType, T> CreateResyncEventHandler<T>(PreventionType preventionType,
-        DynamicValueVariable<T> component) where T : IEquatable<T>
-    {
-        return (_, type, value) =>
-        {
-            if (component.IsDestroyed) return;
-            if (type != preventionType) return;
-            component.RunInUpdates(0, SetComponentValue(component, () => value));
-        };
-    }
-
-    private void UpdateValue(Slot restrainiteSlot, PreventionType preventionType, bool value)
+    private void UpdateRestrictionState(Slot restrainiteSlot, PreventionType preventionType, bool value)
     {
         restrainiteSlot.RunInUpdates(0, () =>
         {
-            if (_configuration.UpdateValue(preventionType, value)) return;
+            if (_configuration.UpdateRestrictionState(preventionType, value)) return;
 
-            ResoniteMod.Msg($"Value {preventionType} changed to {value}");
+            ResoniteMod.Msg($"State of {preventionType} changed to {value}");
             OnBoolValueChanged?.Invoke(restrainiteSlot, preventionType, value);
         });
     }
@@ -356,38 +279,71 @@ public class DynamicVariableSync
         {
             if (_configuration.UpdateCounter(preventionType, value)) return;
 
-            ResoniteMod.Msg($"Counter {preventionType} changed to {value}");
+            ResoniteMod.Msg($"Counter of {preventionType} changed to {value}");
             OnIntegerValueChanged?.Invoke(restrainiteSlot, preventionType, value);
         });
     }
 
-    private SyncFieldEvent<string> CreateOnValueChangeEventHandlerForSelectiveHearingList(Slot restrainiteSlot,
-        PreventionType preventionType)
+    private void UpdateString(Slot restrainiteSlot, PreventionType preventionType, string value)
     {
-        return field =>
+        restrainiteSlot.RunInUpdates(0, () =>
         {
-            var value = field.Value;
+            if (_configuration.UpdateString(preventionType, value)) return;
 
-
-            var oldValue = _configuration.SelectiveHearingUserIDsAsString;
-            if (value == oldValue) return;
-            _configuration.SelectiveHearingUserIDsAsString = value;
-
-
-            ResoniteMod.Msg($"Value SelectiveHearingList changed to {value}");
+            ResoniteMod.Msg($"Value of {preventionType} changed to {value}");
             OnStringValueChanged?.Invoke(restrainiteSlot, preventionType, value);
-        };
+        });
     }
 
-    private static Action SetComponentValue<T>(DynamicValueVariable<T> component, Func<T> valueFunc)
-        where T : IEquatable<T>
+    private class DynamicVariableComponent<T>
     {
-        return () =>
+        private readonly Action<T> _onValueChangeAction;
+        private readonly PreventionType _preventionType;
+        private DynamicValueVariable<T>? _component;
+
+        internal DynamicVariableComponent(PreventionType preventionType,
+            Slot slot, string nameWithPrefix, T defaultValue, Action<T> onValueChangeAction)
         {
-            if (component.IsDestroyed) return;
-            var value = valueFunc();
-            if (value == null) return;
-            if (!value.Equals(component.Value.Value)) component.Value.Value = value;
-        };
+            _preventionType = preventionType;
+            _onValueChangeAction = onValueChangeAction;
+            _component = slot.GetComponentOrAttach<DynamicValueVariable<T>>(out var attached,
+                search => search.VariableName.Value == nameWithPrefix);
+            if (!attached) return;
+
+            _component.VariableName.Value = nameWithPrefix;
+            _component.Value.Value = defaultValue;
+            _component.Persistent = false;
+
+            _component.Value.OnValueChange += OnComponentValueChange;
+            _component.Destroyed += Destroyed;
+        }
+
+        internal event Action? OnDestroyed;
+
+        private void Destroyed(IDestroyable destroyable)
+        {
+            if (_component == null) return;
+            _component.Destroyed -= Destroyed;
+            _component.Value.OnValueChange -= OnComponentValueChange;
+            OnDestroyed?.Invoke();
+            _component = null;
+        }
+
+        private void OnComponentValueChange(SyncField<T> value)
+        {
+            _onValueChangeAction(value.Value);
+        }
+
+        internal void OnInternalStateChange(Slot _, PreventionType preventionType, T value)
+        {
+            if (_component == null || _component.IsDestroyed) return;
+            if (preventionType != _preventionType) return;
+            _component.RunInUpdates(0, () =>
+            {
+                if (_component.IsDestroyed) return;
+                if (value == null) return;
+                if (!value.Equals(_component.Value.Value)) _component.Value.Value = value;
+            });
+        }
     }
 }

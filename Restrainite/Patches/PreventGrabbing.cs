@@ -1,6 +1,5 @@
 using FrooxEngine;
 using HarmonyLib;
-using ResoniteModLoader;
 using Restrainite.Enums;
 
 namespace Restrainite.Patches;
@@ -8,7 +7,16 @@ namespace Restrainite.Patches;
 internal class PreventGrabbing
 {
     private static InteractionHandler? _interactionHandler;
-    
+
+
+    public static void OnChange(Slot slot, PreventionType preventionType, bool value)
+    {
+        if (preventionType != PreventionType.PreventGrabbing || _interactionHandler == null) return;
+
+        var method = AccessTools.Method(typeof(InteractionHandler), "EndGrab", [typeof(bool)]);
+        method?.Invoke(_interactionHandler, [false]);
+    }
+
     [HarmonyPatch(typeof(InteractionHandler), "StartGrab")]
     private class InteractionHandlerStartGrabPatch
     {
@@ -16,10 +24,10 @@ internal class PreventGrabbing
         {
             _interactionHandler = __instance;
             return __instance.World == Userspace.UserspaceWorld ||
-                   !Restrainite.GetValue(PreventionType.PreventGrabbing);
+                   !Restrainite.IsRestricted(PreventionType.PreventGrabbing);
         }
     }
-    
+
     [HarmonyPatch(typeof(InteractionHandler), "EndGrab")]
     private class InteractionHandlerEndGrabPatch
     {
@@ -29,14 +37,4 @@ internal class PreventGrabbing
             _interactionHandler = null;
         }
     }
-
-    
-    public static void OnChange(Slot slot, PreventionType preventionType, bool value)
-    {
-        if (preventionType != PreventionType.PreventGrabbing || _interactionHandler == null) return;
-        
-        var method = AccessTools.Method(typeof(InteractionHandler), "EndGrab", [typeof(bool)]);
-        method?.Invoke(_interactionHandler, [false]);
-    }
-    
 }

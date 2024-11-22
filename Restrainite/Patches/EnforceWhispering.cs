@@ -11,7 +11,7 @@ internal class EnforceWhispering
     {
         private static void Postfix(ref VoiceMode __result, User __instance)
         {
-            if (__instance.IsLocalUser && Restrainite.GetValue(PreventionType.EnforceWhispering))
+            if (__instance.IsLocalUser && Restrainite.IsRestricted(PreventionType.EnforceWhispering))
                 __result = VoiceMode.Whisper;
         }
     }
@@ -21,7 +21,7 @@ internal class EnforceWhispering
     {
         private static bool Prefix(User __instance)
         {
-            return !(__instance.IsLocalUser && Restrainite.GetValue(PreventionType.EnforceWhispering));
+            return !(__instance.IsLocalUser && Restrainite.IsRestricted(PreventionType.EnforceWhispering));
         }
     }
 }

@@ -11,7 +11,7 @@ internal class PreventSwitchingWorld
     {
         private static bool Prefix()
         {
-            return !Restrainite.GetValue(PreventionType.PreventSwitchingWorld);
+            return !Restrainite.IsRestricted(PreventionType.PreventSwitchingWorld);
         }
     }
 
@@ -20,7 +20,7 @@ internal class PreventSwitchingWorld
     {
         private static bool Prefix()
         {
-            return !Restrainite.GetValue(PreventionType.PreventSwitchingWorld);
+            return !Restrainite.IsRestricted(PreventionType.PreventSwitchingWorld);
         }
     }
 
@@ -29,7 +29,7 @@ internal class PreventSwitchingWorld
     {
         private static bool Prefix()
         {
-            return !Restrainite.GetValue(PreventionType.PreventSwitchingWorld);
+            return !Restrainite.IsRestricted(PreventionType.PreventSwitchingWorld);
         }
     }
 
@@ -38,7 +38,7 @@ internal class PreventSwitchingWorld
     {
         private static bool Prefix()
         {
-            return !Restrainite.GetValue(PreventionType.PreventSwitchingWorld);
+            return !Restrainite.IsRestricted(PreventionType.PreventSwitchingWorld);
         }
     }
 }

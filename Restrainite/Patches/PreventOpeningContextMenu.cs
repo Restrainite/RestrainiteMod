@@ -12,7 +12,7 @@ internal class PreventOpeningContextMenu
         private static bool Prefix(InteractionHandler __instance)
         {
             return __instance.World == Userspace.UserspaceWorld ||
-                   !Restrainite.GetValue(PreventionType.PreventOpeningContextMenu);
+                   !Restrainite.IsRestricted(PreventionType.PreventOpeningContextMenu);
         }
     }
 }

@@ -28,9 +28,9 @@ public class Restrainite : ResoniteMod
         harmony.PatchAll();
     }
 
-    internal static bool GetValue(PreventionType value)
+    internal static bool IsRestricted(PreventionType value)
     {
-        return Cfg.GetValue(value);
+        return Cfg.IsRestricted(value);
     }
 
     [HarmonyPatch(typeof(World), nameof(World.LocalUser), MethodType.Setter)]
