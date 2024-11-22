@@ -1,10 +1,10 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
     <PropertyGroup> 
-        <Authors>SnepDrone &amp; Zenuru</Authors>
+        <Authors>SnepDrone, Zenuru</Authors>
         <Product>Restrainite</Product>
         <Description>Allows others to control restrictions of the local user</Description>
         <Version>0.1.0</Version>
-        <Copyright>$(Authors)</Copyright>
+        <Copyright>&#169; 2024 $(Authors)</Copyright>
         <AssemblyVersion>$(Version)</AssemblyVersion>
         <AssemblyTitle>$(Product)</AssemblyTitle>
     </PropertyGroup>
