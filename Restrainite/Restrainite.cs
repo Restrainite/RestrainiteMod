@@ -11,7 +11,7 @@ public class Restrainite : ResoniteMod
     private static readonly DynamicVariableSync DynVarSync = new(Cfg);
 
     public override string Name => "Restrainite";
-    public override string Author => "SnepDroneZenuru";
+    public override string Author => "SnepDrone Zenuru";
     public override string Version => "0.1.1";
     public override string Link => "https://github.com/SnepDrone/Restrainite";
 
