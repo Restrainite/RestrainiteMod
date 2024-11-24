@@ -6,6 +6,13 @@ namespace Restrainite.Patches;
 
 internal class PreventOpeningDash
 {
+    public static void OnChange(Slot slot, PreventionType preventionType, bool value)
+    {
+        if (preventionType != PreventionType.PreventOpeningDash || !value) return;
+
+        Userspace.UserspaceWorld.GetGloballyRegisteredComponent<UserspaceRadiantDash>().Open = false;
+    }
+    
     [HarmonyPatch(typeof(UserspaceRadiantDash), nameof(UserspaceRadiantDash.Open), MethodType.Setter)]
     private class UserspaceRadiantDashBlockOpenClosePatch
     {

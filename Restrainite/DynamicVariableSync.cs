@@ -27,6 +27,8 @@ public class DynamicVariableSync
         OnIntegerValueChanged += SendDynamicImpulse;
         OnStringValueChanged += SendDynamicImpulse;
         OnBoolValueChanged += PreventGrabbing.OnChange;
+        OnBoolValueChanged += PreventOpeningDash.OnChange;
+        OnBoolValueChanged += PreventOpeningContextMenu.OnChange;
     }
 
     private event Action<Slot, PreventionType, bool>? OnBoolValueChanged;
