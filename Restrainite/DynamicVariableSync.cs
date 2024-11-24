@@ -27,6 +27,8 @@ public class DynamicVariableSync
         OnIntegerValueChanged += SendDynamicImpulse;
         OnStringValueChanged += SendDynamicImpulse;
         OnBoolValueChanged += PreventGrabbing.OnChange;
+        OnBoolValueChanged += PreventOpeningDash.OnChange;
+        OnBoolValueChanged += PreventOpeningContextMenu.OnChange;
     }
 
     private event Action<Slot, PreventionType, bool>? OnBoolValueChanged;
@@ -96,11 +98,11 @@ public class DynamicVariableSync
         var slot = userRoot.Target.Slot;
         ShowOrHideRestrainiteRootSlot(slot, slot.World.WorldManager.FocusedWorld);
 
-        Action<IChangeable> onChanged = _ => ShowOrHideRestrainiteRootSlot(slot, slot.World.WorldManager.FocusedWorld);
+        Action<IChangeable> onChanged = _ => ShowOrHideRestrainiteRootSlot(slot, slot.World.WorldManager.FocusedWorld, true);
         slot.World.Configuration.AccessLevel.Changed += onChanged;
         slot.World.Configuration.HideFromListing.Changed += onChanged;
 
-        Action<World> worldFocused = _ => ShowOrHideRestrainiteRootSlot(slot, slot.World);
+        Action<World> worldFocused = _ => ShowOrHideRestrainiteRootSlot(slot, slot.World, true);
         userRoot.World.WorldManager.WorldFocused += worldFocused;
 
         ModConfigurationKey.OnChangedHandler onPresetChanged = _ =>
@@ -120,10 +122,10 @@ public class DynamicVariableSync
         };
     }
 
-    private void ShowOrHideRestrainiteRootSlot(Slot slot, World focusedWorld)
+    private void ShowOrHideRestrainiteRootSlot(Slot slot, World focusedWorld, bool evaluatePermissions = false)
     {
         var show = slot.World == focusedWorld &&
-                   _configuration.OnWorldPermission(slot.World.AccessLevel, slot.World.HideFromListing);
+                   (!evaluatePermissions || _configuration.OnWorldPermission(slot.World.AccessLevel, slot.World.HideFromListing));
         ResoniteMod.Msg($"ShowOrHideRestrainiteRootSlot {show}");
         slot.RunInUpdates(0, show ? AddRestrainiteSlot(slot) : RemoveRestrainiteSlot(slot));
     }

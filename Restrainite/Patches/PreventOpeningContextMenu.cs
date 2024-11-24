@@ -6,6 +6,13 @@ namespace Restrainite.Patches;
 
 internal class PreventOpeningContextMenu
 {
+    public static void OnChange(Slot slot, PreventionType preventionType, bool value)
+    {
+        if (preventionType != PreventionType.PreventOpeningContextMenu || !value) return;
+
+        slot.World.LocalUser.CloseContextMenu(null!);
+    }
+    
     [HarmonyPatch(typeof(InteractionHandler), "TryOpenContextMenu")]
     private class InteractionHandlerTryOpenContextMenuPatch
     {
