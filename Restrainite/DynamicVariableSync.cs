@@ -96,21 +96,21 @@ public class DynamicVariableSync
         if (userRoot.Target == null) return;
         ResoniteMod.Msg($"Restrainite root changed for {userRoot} {userRoot.Target.Slot}");
         var slot = userRoot.Target.Slot;
-        ShowOrHideRestrainiteRootSlot(slot, slot.World.WorldManager.FocusedWorld);
+        ShowOrHideRestrainiteRootSlot(slot);
 
         Action<IChangeable> onChanged = _ =>
-            ShowOrHideRestrainiteRootSlot(slot, slot.World.WorldManager.FocusedWorld, true);
+            ShowOrHideRestrainiteRootSlot(slot);
         slot.World.Configuration.AccessLevel.Changed += onChanged;
         slot.World.Configuration.HideFromListing.Changed += onChanged;
 
-        Action<World> worldFocused = _ => ShowOrHideRestrainiteRootSlot(slot, slot.World, true);
+        Action<World> worldFocused = _ => ShowOrHideRestrainiteRootSlot(slot);
         userRoot.World.WorldManager.WorldFocused += worldFocused;
 
         ModConfigurationKey.OnChangedHandler onPresetChanged = _ =>
         {
             if (slot.IsDestroyed || slot.IsDestroying) return;
             slot.RunInUpdates(0, () =>
-                ShowOrHideRestrainiteRootSlot(slot, slot.World.WorldManager.FocusedWorld));
+                ShowOrHideRestrainiteRootSlot(slot, true));
         };
         _configuration.OnPresetChange += onPresetChanged;
 
@@ -123,10 +123,10 @@ public class DynamicVariableSync
         };
     }
 
-    private void ShowOrHideRestrainiteRootSlot(Slot slot, World focusedWorld, bool evaluatePermissions = false)
+    private void ShowOrHideRestrainiteRootSlot(Slot slot, bool skipWorldPermissions = false)
     {
-        var show = slot.World == focusedWorld &&
-                   (!evaluatePermissions ||
+        var show = slot.World == slot.World.WorldManager.FocusedWorld &&
+                   (skipWorldPermissions ||
                     _configuration.OnWorldPermission(slot.World.AccessLevel, slot.World.HideFromListing));
         ResoniteMod.Msg($"ShowOrHideRestrainiteRootSlot {show}");
         slot.RunInUpdates(0, show ? AddRestrainiteSlot(slot) : RemoveRestrainiteSlot(slot));
