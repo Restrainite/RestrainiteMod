@@ -98,7 +98,8 @@ public class DynamicVariableSync
         var slot = userRoot.Target.Slot;
         ShowOrHideRestrainiteRootSlot(slot, slot.World.WorldManager.FocusedWorld);
 
-        Action<IChangeable> onChanged = _ => ShowOrHideRestrainiteRootSlot(slot, slot.World.WorldManager.FocusedWorld, true);
+        Action<IChangeable> onChanged = _ =>
+            ShowOrHideRestrainiteRootSlot(slot, slot.World.WorldManager.FocusedWorld, true);
         slot.World.Configuration.AccessLevel.Changed += onChanged;
         slot.World.Configuration.HideFromListing.Changed += onChanged;
 
@@ -125,7 +126,8 @@ public class DynamicVariableSync
     private void ShowOrHideRestrainiteRootSlot(Slot slot, World focusedWorld, bool evaluatePermissions = false)
     {
         var show = slot.World == focusedWorld &&
-                   (!evaluatePermissions || _configuration.OnWorldPermission(slot.World.AccessLevel, slot.World.HideFromListing));
+                   (!evaluatePermissions ||
+                    _configuration.OnWorldPermission(slot.World.AccessLevel, slot.World.HideFromListing));
         ResoniteMod.Msg($"ShowOrHideRestrainiteRootSlot {show}");
         slot.RunInUpdates(0, show ? AddRestrainiteSlot(slot) : RemoveRestrainiteSlot(slot));
     }
@@ -221,10 +223,10 @@ public class DynamicVariableSync
             OnIntegerValueChanged -= dynamicVariableIntegerComponent.OnInternalStateChange;
 
         // Create optional String Component
-        if (preventionType != PreventionType.EnforceSelectiveHearing) return;
+        if (!preventionType.HasStringVariable()) return;
 
         var dynamicVariableStringComponent = new DynamicVariableComponent<string>(preventionType, slot,
-            nameWithPrefix, _configuration.SelectiveHearingUserIDsAsString,
+            nameWithPrefix, _configuration.GetString(preventionType),
             value => UpdateString(restrainiteSlot, preventionType, value));
         OnStringValueChanged += dynamicVariableStringComponent.OnInternalStateChange;
         dynamicVariableIntegerComponent.OnDestroyed += () =>

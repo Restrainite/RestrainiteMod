@@ -17,6 +17,8 @@ public class Configuration
 
     private readonly BitArray _currentPreventValues = new(PreventionTypes.Max, false);
 
+    private readonly Dictionary<PreventionType, List<string>> _currentStringListDict = new();
+
     private readonly Dictionary<PreventionType, ModConfigurationKey<bool>> _displayedPreventionTypes = new();
 
     private readonly ModConfigurationKey<PresetType> _presetConfig = new("Preset",
@@ -30,10 +32,7 @@ public class Configuration
 
     private readonly Dictionary<PresetType, ModConfigurationKey<bool[]>> _presetStore = new();
 
-    private readonly ModConfigurationKey<string> _selectiveHearingList = new(
-        "Selective Hearing UserID List",
-        "Comma separated list of user id",
-        () => "", true);
+    private readonly Dictionary<PreventionType, ModConfigurationKey<string>> _stringValueStore = new();
 
     private ModConfiguration? _config;
 
@@ -47,20 +46,11 @@ public class Configuration
         foreach (var preventionType in PreventionTypes.List) _currentPreventCounter.Add(preventionType, 0);
     }
 
-    public List<string> SelectiveHearingUserIDs { get; private set; } = [];
-
-    public string SelectiveHearingUserIDsAsString
-    {
-        get => _config?.GetValue(_selectiveHearingList) ?? "";
-        set => _config?.Set(_selectiveHearingList, value);
-    }
-
     public void DefineConfiguration(ModConfigurationDefinitionBuilder builder)
     {
         ResoniteMod.Msg("Define configuration");
         builder.Key(_presetConfig);
         builder.Key(_presetStartupConfig);
-        builder.Key(_selectiveHearingList);
 
         foreach (var presetType in PresetTypes.List) builder.Key(_presetStore[presetType]);
 
@@ -70,6 +60,13 @@ public class Configuration
                 "Should others be able to control this ability.", () => false);
             builder.Key(key);
             _displayedPreventionTypes.Add(preventionType, key);
+
+            if (!preventionType.HasStringVariable()) continue;
+
+            var stringKey = new ModConfigurationKey<string>($"String value for {preventionType} Restriction",
+                "Comma seperated values", () => "", true);
+            builder.Key(stringKey);
+            _stringValueStore.Add(preventionType, stringKey);
         }
 
         foreach (var worldPermissionType in WorldPermissionTypes.List)
@@ -83,24 +80,21 @@ public class Configuration
         }
     }
 
-    private void UpdateHearingUserIDs(object? value)
-    {
-        var splitArray = (value as string)?.Split(',') ?? [];
-        SelectiveHearingUserIDs = splitArray.Select(t => t.Trim())
-            .Where(trimmed => trimmed.Length != 0)
-            .ToList();
-    }
-
     public void Init(ModConfiguration? config = null)
     {
         _config = config;
         _presetConfig.OnChanged += OnPresetSelected;
         foreach (var displayedPreventionType in _displayedPreventionTypes)
-        {
             displayedPreventionType.Value.OnChanged += OnPreventionTypeConfigChanged(displayedPreventionType.Key);
+
+        foreach (var stringValueStoreEntry in _stringValueStore)
+        {
+            stringValueStoreEntry.Value.OnChanged += OnStringValueChanged(stringValueStoreEntry.Key);
+            if (_config == null) continue;
+            _currentStringListDict[stringValueStoreEntry.Key] =
+                SplitStringToList(_config.GetValue(stringValueStoreEntry.Value));
         }
-        _selectiveHearingList.OnChanged += UpdateHearingUserIDs;
-        
+
         var presetOnStartup = _config?.GetValue(_presetStartupConfig) ?? PresetChangeType.None;
         if (presetOnStartup != PresetChangeType.DoNotChange) _config?.Set(_presetConfig, (PresetType)presetOnStartup);
 
@@ -108,6 +102,20 @@ public class Configuration
         _currentPreventionTypes = GetCustomStored(currentPreset);
         _config?.Save(true);
     }
+
+    private ModConfigurationKey.OnChangedHandler OnStringValueChanged(PreventionType preventionType)
+    {
+        return value => { _currentStringListDict[preventionType] = SplitStringToList(value); };
+    }
+
+    private static List<string> SplitStringToList(object? value)
+    {
+        var splitArray = (value as string)?.Split(',') ?? [];
+        return splitArray.Select(t => t.Trim())
+            .Where(trimmed => trimmed.Length != 0)
+            .ToList();
+    }
+
 
     private ModConfigurationKey.OnChangedHandler OnPreventionTypeConfigChanged(PreventionType preventionType)
     {
@@ -214,6 +222,27 @@ public class Configuration
         return IsPreventionTypeEnabled(preventionType) && found ? counter : 0;
     }
 
+    internal string GetString(PreventionType preventionType)
+    {
+        return IsPreventionTypeEnabled(preventionType) ? GetStringInternal(preventionType) : string.Empty;
+    }
+
+    internal List<string> GetStringList(PreventionType preventionType)
+    {
+        var found = _currentStringListDict.TryGetValue(preventionType, out var list);
+        return IsPreventionTypeEnabled(preventionType) && found ? list ?? [] : [];
+    }
+
+    private string GetStringInternal(PreventionType preventionType)
+    {
+        if (!preventionType.HasStringVariable() || _config == null)
+            return string.Empty;
+        var found = _stringValueStore.TryGetValue(preventionType, out var modConfigurationKey);
+        if (!found || modConfigurationKey == null) return string.Empty;
+        found = _config.TryGetValue(modConfigurationKey, out var value);
+        return found ? value ?? "" : "";
+    }
+
     internal bool IsPreventionTypeEnabled(PreventionType preventionType)
     {
         if (GetDisplayedPreventionTypeConfig(preventionType, out var key)) return false;
@@ -239,12 +268,21 @@ public class Configuration
 
     internal bool UpdateString(PreventionType preventionType, string value)
     {
-        if (preventionType != PreventionType.EnforceSelectiveHearing) return true;
+        if (!preventionType.HasStringVariable()) return true;
 
-        var oldValue = SelectiveHearingUserIDsAsString;
+        var oldValue = GetStringInternal(preventionType);
         if (value == oldValue) return true;
-        SelectiveHearingUserIDsAsString = value;
+        SetStringInternal(preventionType, value);
         return false;
+    }
+
+    private void SetStringInternal(PreventionType preventionType, string value)
+    {
+        if (!preventionType.HasStringVariable() || _config == null)
+            return;
+        var found = _stringValueStore.TryGetValue(preventionType, out var modConfigurationKey);
+        if (!found || modConfigurationKey == null) return;
+        _config.Set(modConfigurationKey, value);
     }
 
     public bool OnWorldPermission(SessionAccessLevel? sessionAccessLevel, bool hideFromListing)

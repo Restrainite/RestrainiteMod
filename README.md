@@ -14,7 +14,6 @@ TODO: Add list of restrictions here
 
 ## Upcoming Features / ToDo
 
-- Allow/deny lists for items in the context menu root
 - Restrictions to Locomotion
 - Hide the laser, if laser touch is disabled
 - Allow/deny lists for tabs in the dash

@@ -12,7 +12,7 @@ internal class PreventOpeningDash
 
         Userspace.UserspaceWorld.GetGloballyRegisteredComponent<UserspaceRadiantDash>().Open = false;
     }
-    
+
     [HarmonyPatch(typeof(UserspaceRadiantDash), nameof(UserspaceRadiantDash.Open), MethodType.Setter)]
     private class UserspaceRadiantDashBlockOpenClosePatch
     {
