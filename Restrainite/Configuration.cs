@@ -213,7 +213,8 @@ public class Configuration
 
     internal bool IsRestricted(PreventionType preventionType)
     {
-        return IsPreventionTypeEnabled(preventionType) && _currentPreventValues[(int)preventionType];
+        return IsPreventionTypeEnabled(preventionType) && (_currentPreventValues[(int)preventionType] ||
+                                                           DynamicVariableSpaceFinder.IsActive(preventionType));
     }
 
     internal int GetCounter(PreventionType preventionType)
