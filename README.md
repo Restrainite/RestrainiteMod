@@ -14,6 +14,7 @@ TODO: Add list of restrictions here
 
 ## Upcoming Features / ToDo
 
+- Fix EnforceWhisper, it's local only
 - Restrictions to Locomotion
 - Hide the laser, if laser touch is disabled
 - Allow/deny lists for tabs in the dash
