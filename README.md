@@ -12,17 +12,6 @@ There is currently no known way to restrict this based on user ids or similar, b
 
 TODO: Add list of restrictions here
 
-## Upcoming Features / ToDo
-
-- Fix EnforceWhisper, it's local only
-- Restrictions to Locomotion
-- Hide the laser, if laser touch is disabled.
-- If laser touch is disabled, the context menu can't be used.
-- Allow/deny lists for tabs in the dash
-- Test if the plugin also affects other users, if the mod user is the host.
-- Try to circumvent the mod restrictions
-- Testing, testing, testing
-
 ## Installation
 
 1. Install either [MonkeyLoader](https://github.com/ResoniteModdingGroup/MonkeyLoader.GamePacks.ResoniteModLoader) or
