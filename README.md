@@ -16,7 +16,8 @@ TODO: Add list of restrictions here
 
 - Fix EnforceWhisper, it's local only
 - Restrictions to Locomotion
-- Hide the laser, if laser touch is disabled
+- Hide the laser, if laser touch is disabled.
+- If laser touch is disabled, the context menu can't be used.
 - Allow/deny lists for tabs in the dash
 - Test if the plugin also affects other users, if the mod user is the host.
 - Try to circumvent the mod restrictions
