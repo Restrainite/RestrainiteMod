@@ -22,13 +22,10 @@ public class DynamicVariableSync
     {
         _configuration = configuration;
         DynamicVariableSpaceSync.OnGlobalStateChanged += SendDynamicImpulse;
-        OnStringValueChanged += SendDynamicImpulse;
         DynamicVariableSpaceSync.OnGlobalStateChanged += PreventGrabbing.OnChange;
         DynamicVariableSpaceSync.OnGlobalStateChanged += PreventOpeningDash.OnChange;
         DynamicVariableSpaceSync.OnGlobalStateChanged += PreventOpeningContextMenu.OnChange;
     }
-
-    private event Action<Slot, PreventionType, string>? OnStringValueChanged;
 
     private void SendDynamicImpulse<T>(Slot restrainiteSlot, PreventionType preventionType, T value)
     {
@@ -174,23 +171,12 @@ public class DynamicVariableSync
 
         // Create State Component
         var dynamicVariableBooleanComponent = new DynamicVariableComponent<bool>(preventionType, slot,
-            nameWithPrefix, _configuration.IsRestricted(preventionType),
-            _ => { });
+            nameWithPrefix, _configuration.IsRestricted(preventionType));
         DynamicVariableSpaceSync.OnGlobalStateChanged +=
             dynamicVariableBooleanComponent.OnInternalStateChange;
         dynamicVariableBooleanComponent.OnDestroyed += () =>
             DynamicVariableSpaceSync.OnGlobalStateChanged -=
                 dynamicVariableBooleanComponent.OnInternalStateChange;
-
-        // Create optional String Component
-        if (!preventionType.HasStringVariable()) return;
-
-        var dynamicVariableStringComponent = new DynamicVariableComponent<string>(preventionType, slot,
-            nameWithPrefix, _configuration.GetString(preventionType),
-            value => UpdateString(restrainiteSlot, preventionType, value));
-        OnStringValueChanged += dynamicVariableStringComponent.OnInternalStateChange;
-        dynamicVariableStringComponent.OnDestroyed += () =>
-            OnStringValueChanged -= dynamicVariableStringComponent.OnInternalStateChange;
     }
 
     private void RemoveComponents(Slot restrainiteSlot, PreventionType preventionType)
@@ -226,28 +212,15 @@ public class DynamicVariableSync
         oldSlot.Destroy(true);
     }
 
-    private void UpdateString(Slot restrainiteSlot, PreventionType preventionType, string value)
-    {
-        restrainiteSlot.RunInUpdates(0, () =>
-        {
-            if (_configuration.UpdateString(preventionType, value)) return;
-
-            ResoniteMod.Msg($"Value of {preventionType} changed to {value}");
-            OnStringValueChanged?.Invoke(restrainiteSlot, preventionType, value);
-        });
-    }
-
     private class DynamicVariableComponent<T>
     {
-        private readonly Action<T> _onValueChangeAction;
         private readonly PreventionType _preventionType;
         private DynamicValueVariable<T>? _component;
 
         internal DynamicVariableComponent(PreventionType preventionType,
-            Slot slot, string nameWithPrefix, T defaultValue, Action<T> onValueChangeAction)
+            Slot slot, string nameWithPrefix, T defaultValue)
         {
             _preventionType = preventionType;
-            _onValueChangeAction = onValueChangeAction;
             _component = slot.GetComponentOrAttach<DynamicValueVariable<T>>(out var attached,
                 search => search.VariableName.Value == nameWithPrefix);
             if (!attached) return;
@@ -256,7 +229,6 @@ public class DynamicVariableSync
             _component.Value.Value = defaultValue;
             _component.Persistent = false;
 
-            _component.Value.OnValueChange += OnComponentValueChange;
             _component.Destroyed += Destroyed;
         }
 
@@ -266,14 +238,8 @@ public class DynamicVariableSync
         {
             if (_component == null) return;
             _component.Destroyed -= Destroyed;
-            _component.Value.OnValueChange -= OnComponentValueChange;
             OnDestroyed?.Invoke();
             _component = null;
-        }
-
-        private void OnComponentValueChange(SyncField<T> value)
-        {
-            _onValueChangeAction(value.Value);
         }
 
         internal void OnInternalStateChange(Slot _, PreventionType preventionType, T value)

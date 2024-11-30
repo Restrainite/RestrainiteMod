@@ -1,6 +1,8 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Collections.Immutable;
+using System.Linq;
 using FrooxEngine;
 using ResoniteModLoader;
 using Restrainite.Enums;
@@ -45,9 +47,9 @@ internal class DynamicVariableSpaceSync
         var globalState = CalculateGlobalState(preventionType);
 
         if (GetGlobalState(preventionType) == globalState) return;
-        GlobalState[(int)preventionType] = value;
-        ResoniteMod.Msg($"Value of {preventionType.ToExpandedString()} changed to {value}");
-        UpdateRestrictionState(preventionType, value);
+        GlobalState[(int)preventionType] = globalState;
+        ResoniteMod.Msg($"Value of {preventionType.ToExpandedString()} changed to {globalState}");
+        NotifyGlobalStateChange(preventionType, globalState);
     }
 
     private static bool CalculateGlobalState(PreventionType preventionType)
@@ -61,7 +63,7 @@ internal class DynamicVariableSpaceSync
         return globalState;
     }
 
-    private void UpdateRestrictionState(PreventionType preventionType, bool value)
+    private void NotifyGlobalStateChange(PreventionType preventionType, bool value)
     {
         if (!_dynamicVariableSpace.TryGetTarget(out var dynamicVariableSpace) || dynamicVariableSpace == null)
             return;
@@ -76,6 +78,36 @@ internal class DynamicVariableSpaceSync
     internal static bool GetGlobalState(PreventionType preventionType)
     {
         return GlobalState[(int)preventionType];
+    }
+
+    internal static IImmutableSet<string> GetGlobalStrings(PreventionType preventionType)
+    {
+        List<DynamicVariableSpaceSync> spaces;
+        lock (Spaces)
+        {
+            spaces = Spaces.Where(space => space.GetLocalState(preventionType)).ToList();
+        }
+
+        return spaces.SelectMany(space => space.GetLocalStrings(preventionType)).ToImmutableHashSet();
+    }
+
+    private IImmutableSet<string> GetLocalStrings(PreventionType preventionType)
+    {
+        if (!_dynamicVariableSpace.TryGetTarget(out var dynamicVariableSpace) || dynamicVariableSpace == null)
+            return ImmutableHashSet<string>.Empty;
+        var manager = dynamicVariableSpace.GetManager<string>(preventionType.ToExpandedString(), false);
+        if (manager == null || manager.ReadableValueCount == 0) return ImmutableHashSet<string>.Empty;
+        return SplitStringToList(manager.Value ?? string.Empty);
+    }
+
+    private static IImmutableSet<string> SplitStringToList(object? value)
+    {
+        var splitArray = (value as string)?.Split(',') ?? [];
+        return splitArray.Select(t => t.Trim())
+                .Where(trimmed => trimmed.Length != 0)
+                .ToList()
+                .ToImmutableHashSet()
+            ;
     }
 
     internal static bool UpdateListAndGetIfValid(DynamicVariableSpace dynamicVariableSpace,

@@ -1,7 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
+using System.Collections.Immutable;
 using ResoniteModLoader;
 using Restrainite.Enums;
 using SkyFrost.Base;
@@ -12,8 +12,6 @@ public class Configuration
 {
     private readonly Dictionary<WorldPermissionType, ModConfigurationKey<PresetChangeType>>
         _changeOnWorldPermissionChangeDict = new();
-
-    private readonly Dictionary<PreventionType, List<string>> _currentStringListDict = new();
 
     private readonly Dictionary<PreventionType, ModConfigurationKey<bool>> _displayedPreventionTypes = new();
 
@@ -28,7 +26,6 @@ public class Configuration
 
     private readonly Dictionary<PresetType, ModConfigurationKey<bool[]>> _presetStore = new();
 
-    private readonly Dictionary<PreventionType, ModConfigurationKey<string>> _stringValueStore = new();
 
     private ModConfiguration? _config;
 
@@ -55,13 +52,6 @@ public class Configuration
                 "Should others be able to control this ability.", () => false);
             builder.Key(key);
             _displayedPreventionTypes.Add(preventionType, key);
-
-            if (!preventionType.HasStringVariable()) continue;
-
-            var stringKey = new ModConfigurationKey<string>($"String value for {preventionType} Restriction",
-                "Comma seperated values", () => "", true);
-            builder.Key(stringKey);
-            _stringValueStore.Add(preventionType, stringKey);
         }
 
         foreach (var worldPermissionType in WorldPermissionTypes.List)
@@ -82,33 +72,12 @@ public class Configuration
         foreach (var displayedPreventionType in _displayedPreventionTypes)
             displayedPreventionType.Value.OnChanged += OnPreventionTypeConfigChanged(displayedPreventionType.Key);
 
-        foreach (var stringValueStoreEntry in _stringValueStore)
-        {
-            stringValueStoreEntry.Value.OnChanged += OnStringValueChanged(stringValueStoreEntry.Key);
-            if (_config == null) continue;
-            _currentStringListDict[stringValueStoreEntry.Key] =
-                SplitStringToList(_config.GetValue(stringValueStoreEntry.Value));
-        }
-
         var presetOnStartup = _config?.GetValue(_presetStartupConfig) ?? PresetChangeType.None;
         if (presetOnStartup != PresetChangeType.DoNotChange) _config?.Set(_presetConfig, (PresetType)presetOnStartup);
 
         var currentPreset = _config?.GetValue(_presetConfig) ?? PresetType.None;
         _currentPreventionTypes = GetCustomStored(currentPreset);
         _config?.Save(true);
-    }
-
-    private ModConfigurationKey.OnChangedHandler OnStringValueChanged(PreventionType preventionType)
-    {
-        return value => { _currentStringListDict[preventionType] = SplitStringToList(value); };
-    }
-
-    private static List<string> SplitStringToList(object? value)
-    {
-        var splitArray = (value as string)?.Split(',') ?? [];
-        return splitArray.Select(t => t.Trim())
-            .Where(trimmed => trimmed.Length != 0)
-            .ToList();
     }
 
 
@@ -176,7 +145,6 @@ public class Configuration
         return bitArray;
     }
 
-
     private void SetCustomStored(PresetType presetType, BitArray bitArray)
     {
         var array = new bool[bitArray.Count];
@@ -211,25 +179,11 @@ public class Configuration
         return IsPreventionTypeEnabled(preventionType) && DynamicVariableSpaceSync.GetGlobalState(preventionType);
     }
 
-    internal string GetString(PreventionType preventionType)
+    internal IImmutableSet<string> GetStrings(PreventionType preventionType)
     {
-        return IsPreventionTypeEnabled(preventionType) ? GetStringInternal(preventionType) : string.Empty;
-    }
-
-    internal List<string> GetStringList(PreventionType preventionType)
-    {
-        var found = _currentStringListDict.TryGetValue(preventionType, out var list);
-        return IsPreventionTypeEnabled(preventionType) && found ? list ?? [] : [];
-    }
-
-    private string GetStringInternal(PreventionType preventionType)
-    {
-        if (!preventionType.HasStringVariable() || _config == null)
-            return string.Empty;
-        var found = _stringValueStore.TryGetValue(preventionType, out var modConfigurationKey);
-        if (!found || modConfigurationKey == null) return string.Empty;
-        found = _config.TryGetValue(modConfigurationKey, out var value);
-        return found ? value ?? "" : "";
+        return IsPreventionTypeEnabled(preventionType)
+            ? DynamicVariableSpaceSync.GetGlobalStrings(preventionType)
+            : ImmutableHashSet<string>.Empty;
     }
 
     internal bool IsPreventionTypeEnabled(PreventionType preventionType)
@@ -240,30 +194,11 @@ public class Configuration
         return foundConfigValue && configValue;
     }
 
-    internal bool UpdateString(PreventionType preventionType, string value)
-    {
-        if (!preventionType.HasStringVariable()) return true;
-
-        var oldValue = GetStringInternal(preventionType);
-        if (value == oldValue) return true;
-        SetStringInternal(preventionType, value);
-        return false;
-    }
-
-    private void SetStringInternal(PreventionType preventionType, string value)
-    {
-        if (!preventionType.HasStringVariable() || _config == null)
-            return;
-        var found = _stringValueStore.TryGetValue(preventionType, out var modConfigurationKey);
-        if (!found || modConfigurationKey == null) return;
-        _config.Set(modConfigurationKey, value);
-    }
-
     public bool ShouldHide()
     {
         return _config?.GetValue(_presetConfig) == PresetType.None;
     }
-    
+
     public bool OnWorldPermission(SessionAccessLevel? sessionAccessLevel, bool hideFromListing)
     {
         var currentPreset = _config?.GetValue(_presetConfig);

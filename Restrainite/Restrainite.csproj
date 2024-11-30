@@ -3,7 +3,7 @@
         <Authors>SnepDrone, Zenuru</Authors>
         <Product>Restrainite</Product>
         <Description>Allows others to control restrictions of the local user</Description>
-        <Version>0.2.4</Version>
+        <Version>0.3.0</Version>
         <Copyright>&#169; 2024 $(Authors)</Copyright>
         <AssemblyVersion>$(Version)</AssemblyVersion>
         <AssemblyTitle>$(Product)</AssemblyTitle>
@@ -56,6 +56,9 @@
         </Reference>
         <Reference Include="ResoniteModLoader">
             <HintPath>$(ResonitePath)Libraries\ResoniteModLoader.dll</HintPath>
+        </Reference>
+        <Reference Include="System.Collections.Immutable">
+            <HintPath>$(ResonitePath)Resonite_Data\Managed\System.Collections.Immutable.dll</HintPath>
         </Reference>
     </ItemGroup>
     <Target Name="PostBuild" AfterTargets="PostBuildEvent">

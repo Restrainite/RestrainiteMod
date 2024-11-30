@@ -12,7 +12,7 @@ public class RestrainiteMod : ResoniteMod
 
     public override string Name => "Restrainite";
     public override string Author => "SnepDrone Zenuru";
-    public override string Version => "0.2.4";
+    public override string Version => "0.3.0";
     public override string Link => "https://github.com/SnepDrone/Restrainite";
 
     public override void DefineConfiguration(ModConfigurationDefinitionBuilder builder)

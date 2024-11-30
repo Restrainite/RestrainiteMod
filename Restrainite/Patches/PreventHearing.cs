@@ -14,7 +14,7 @@ internal class PreventHearing
             var userId = __instance.UserID;
             if (userId is null) return RestrainiteMod.IsRestricted(PreventionType.PreventHearing) ? 0.0f : result;
             if (RestrainiteMod.IsRestricted(PreventionType.EnforceSelectiveHearing) &&
-                !RestrainiteMod.Cfg.GetStringList(PreventionType.EnforceSelectiveHearing).Contains(userId)) return 0.0f;
+                !RestrainiteMod.Cfg.GetStrings(PreventionType.EnforceSelectiveHearing).Contains(userId)) return 0.0f;
             return RestrainiteMod.IsRestricted(PreventionType.PreventHearing) ? 0.0f : result;
         }
     }
