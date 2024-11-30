@@ -49,17 +49,26 @@ internal static class DynamicVariableSpaceFinder
             ResoniteMod.Msg($"DynamicVariableSpaceAllocateManagerBoolean found {preventionType}");
 
             var booleanValueManagerWrapper = new BooleanValueManagerWrapper(name, preventionType, __instance);
-            dynamicVariableSpaceSync.Register(booleanValueManagerWrapper);
+            booleanValueManagerWrapper.OnChange += dynamicVariableSpaceSync.UpdateLocalState;
             __result = booleanValueManagerWrapper;
         }
     }
 
     [HarmonyPatch(typeof(DynamicVariableSpace.ValueManager<bool>), "SetValue")]
-    private static class DynamicVariableSpaceValueManagerPatch
+    private static class DynamicVariableSpaceValueManagerSetValuePatch
     {
-        private static void Prefix(bool value, DynamicVariableSpace.ValueManager<bool> __instance)
+        private static void Postfix(bool value, DynamicVariableSpace.ValueManager<bool> __instance)
         {
             if (__instance is BooleanValueManagerWrapper wrapper) wrapper.SetValueOverride(value);
+        }
+    }
+    
+    [HarmonyPatch(typeof(DynamicVariableSpace.ValueManager<bool>), "Unregister")]
+    private static class DynamicVariableSpaceValueManagerUnregisterPatch
+    {
+        private static void Postfix(DynamicVariableSpace.ValueManager<bool> __instance)
+        {
+            if (__instance is BooleanValueManagerWrapper wrapper && __instance.ReadableValueCount == 0) wrapper.SetValueOverride(false);
         }
     }
 

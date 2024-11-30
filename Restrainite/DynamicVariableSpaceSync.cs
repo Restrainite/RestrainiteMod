@@ -36,7 +36,7 @@ internal class DynamicVariableSpaceSync
         return IsActiveForLocalUser() && _localState[(int)preventionType];
     }
 
-    private void UpdateLocalState(PreventionType preventionType, bool value)
+    internal void UpdateLocalState(PreventionType preventionType, bool value)
     {
         value = IsActiveForLocalUser() && value;
         if (_localState[(int)preventionType] == value) return;
@@ -124,11 +124,6 @@ internal class DynamicVariableSpaceSync
         var manager = dynamicVariableSpace.GetManager<User>("Target User", false);
         if (manager == null || manager.ReadableValueCount == 0) return false;
         return manager.Value == dynamicVariableSpace.LocalUser;
-    }
-
-    internal void Register(DynamicVariableSpaceFinder.BooleanValueManagerWrapper booleanValueManager)
-    {
-        booleanValueManager.OnChange += UpdateLocalState;
     }
 
     public static void Remove(DynamicVariableSpace dynamicVariableSpace)
