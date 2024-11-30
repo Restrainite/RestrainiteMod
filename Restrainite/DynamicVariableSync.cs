@@ -13,7 +13,8 @@ namespace Restrainite;
 public class DynamicVariableSync
 {
     private const string RestrainiteRootSlotName = "Restrainite Status";
-    private const string DynamicVariableSpaceName = "Restrainite Status";
+    private const string DynamicVariableSpaceStatusName = "Restrainite Status";
+    private const string ImpulsePrefix = "Restrainite";
     private static readonly FieldInfo UserRootField = AccessTools.Field(typeof(User), "userRoot");
 
     private readonly Configuration _configuration;
@@ -38,11 +39,12 @@ public class DynamicVariableSync
             if (slot.Engine.WorldManager.FocusedWorld != slot.World) return;
             if (!_configuration.IsPreventionTypeEnabled(preventionType)) return;
             ProtoFluxHelper.DynamicImpulseHandler.TriggerAsyncDynamicImpulseWithArgument(
-                slot, $"{DynamicVariableSpaceName} Change", true,
+                slot, $"{ImpulsePrefix} Change", true,
                 $"{preventionType.ToExpandedString()}:{typeof(T)}:{value}"
             );
             ProtoFluxHelper.DynamicImpulseHandler.TriggerAsyncDynamicImpulseWithArgument(
-                slot, $"{DynamicVariableSpaceName} {preventionType.ToExpandedString()}", true, value
+                slot, $"{ImpulsePrefix} {preventionType.ToExpandedString()}", true,
+                value
             );
         });
     }
@@ -102,10 +104,10 @@ public class DynamicVariableSync
             if (slot.IsDestroyed || slot.IsDestroying) return;
             ResoniteMod.Msg($"Adding Restrainite DynamicVariableSpace to {slot}");
             var dynamicVariableSpace = slot.GetComponentOrAttach<DynamicVariableSpace>(
-                component => component.CurrentName == DynamicVariableSpaceName
+                component => component.CurrentName == DynamicVariableSpaceStatusName
             );
             dynamicVariableSpace.OnlyDirectBinding.Value = true;
-            dynamicVariableSpace.SpaceName.Value = DynamicVariableSpaceName;
+            dynamicVariableSpace.SpaceName.Value = DynamicVariableSpaceStatusName;
             dynamicVariableSpace.Persistent = false;
 
             ResoniteMod.Msg($"Adding Restrainite slot to {slot}");
@@ -147,7 +149,7 @@ public class DynamicVariableSync
             ResoniteMod.Msg($"Removing Restrainite slot from {slot}");
             slot.RemoveAllComponents(component => component is DynamicVariableSpace
             {
-                CurrentName: DynamicVariableSpaceName
+                CurrentName: DynamicVariableSpaceStatusName
             });
             restrainiteSlot.Destroy(true);
         };
@@ -166,12 +168,11 @@ public class DynamicVariableSync
         ResoniteMod.Msg($"Creating Components for {preventionType} in {restrainiteSlot}");
         var expandedName = preventionType.ToExpandedString();
         var slot = restrainiteSlot.FindChildOrAdd(expandedName, false);
-        var nameWithPrefix = $"{DynamicVariableSpaceName}/{expandedName}";
-        slot.Tag = nameWithPrefix;
+        slot.Tag = $"{DynamicVariableSpaceSync.DynamicVariableSpaceName}/{expandedName}";
 
         // Create State Component
         var dynamicVariableBooleanComponent = new DynamicVariableComponent<bool>(preventionType, slot,
-            nameWithPrefix, _configuration.IsRestricted(preventionType));
+            $"{DynamicVariableSpaceStatusName}/{expandedName}", _configuration.IsRestricted(preventionType));
         DynamicVariableSpaceSync.OnGlobalStateChanged +=
             dynamicVariableBooleanComponent.OnInternalStateChange;
         dynamicVariableBooleanComponent.OnDestroyed += () =>
@@ -194,15 +195,11 @@ public class DynamicVariableSync
             return;
         }
 
-        var nameWithPrefix = $"{DynamicVariableSpaceName}/{expandedName}";
+        var nameWithPrefix = $"{DynamicVariableSpaceStatusName}/{expandedName}";
         oldSlot.RemoveAllComponents(component => component is GizmoLink);
         oldSlot.RemoveAllComponents(component => component is DynamicValueVariable<bool> dynComponent &&
                                                  dynComponent.VariableName == nameWithPrefix);
-        oldSlot.RemoveAllComponents(component => component is DynamicValueVariable<int> dynComponent &&
-                                                 dynComponent.VariableName == nameWithPrefix);
-        if (preventionType.HasStringVariable())
-            oldSlot.RemoveAllComponents(component => component is DynamicValueVariable<string> dynComponent &&
-                                                     dynComponent.VariableName == nameWithPrefix);
+
         if (oldSlot.ComponentCount != 0)
         {
             ResoniteMod.Warn($"Unable to remove slot {oldSlot.Name}, {oldSlot.ComponentCount}");

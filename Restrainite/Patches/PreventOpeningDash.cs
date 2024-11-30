@@ -8,7 +8,10 @@ internal class PreventOpeningDash
 {
     public static void OnChange(Slot slot, PreventionType preventionType, bool value)
     {
-        if (preventionType != PreventionType.PreventOpeningDash || !value) return;
+        if (preventionType != PreventionType.PreventOpeningDash ||
+            !value ||
+            !RestrainiteMod.Cfg.IsPreventionTypeEnabled(preventionType))
+            return;
 
         Userspace.UserspaceWorld.GetGloballyRegisteredComponent<UserspaceRadiantDash>().Open = false;
     }

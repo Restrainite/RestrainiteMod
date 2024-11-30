@@ -11,7 +11,11 @@ internal class PreventGrabbing
 
     public static void OnChange(Slot slot, PreventionType preventionType, bool value)
     {
-        if (preventionType != PreventionType.PreventGrabbing || _interactionHandler == null) return;
+        if (preventionType != PreventionType.PreventGrabbing ||
+            !value ||
+            _interactionHandler == null ||
+            !RestrainiteMod.Cfg.IsPreventionTypeEnabled(preventionType))
+            return;
 
         var method = AccessTools.Method(typeof(InteractionHandler), "EndGrab", [typeof(bool)]);
         method?.Invoke(_interactionHandler, [false]);

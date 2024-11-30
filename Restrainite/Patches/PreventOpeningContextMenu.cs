@@ -8,7 +8,10 @@ internal class PreventOpeningContextMenu
 {
     public static void OnChange(Slot slot, PreventionType preventionType, bool value)
     {
-        if (preventionType != PreventionType.PreventOpeningContextMenu || !value) return;
+        if (preventionType != PreventionType.PreventOpeningContextMenu ||
+            !value ||
+            !RestrainiteMod.Cfg.IsPreventionTypeEnabled(preventionType))
+            return;
 
         slot.World.LocalUser.CloseContextMenu(null!);
     }

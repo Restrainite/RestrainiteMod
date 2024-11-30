@@ -11,6 +11,9 @@ namespace Restrainite;
 
 internal class DynamicVariableSpaceSync
 {
+    internal const string DynamicVariableSpaceName = "Restrainite";
+    private const string TargetUser = "Target User";
+
     private static readonly List<DynamicVariableSpaceSync> Spaces = [];
 
     private static readonly BitArray GlobalState = new(PreventionTypes.Max, false);
@@ -144,7 +147,7 @@ internal class DynamicVariableSpaceSync
 
     private static bool IsRestrainiteDynamicSpace(DynamicVariableSpace dynamicVariableSpace)
     {
-        return dynamicVariableSpace is { IsDestroyed: false, IsDisposed: false, CurrentName: "Restrainite" };
+        return dynamicVariableSpace is { IsDestroyed: false, IsDisposed: false, CurrentName: DynamicVariableSpaceName };
     }
 
     private bool IsActiveForLocalUser()
@@ -153,7 +156,7 @@ internal class DynamicVariableSpaceSync
             return false;
         if (!IsRestrainiteDynamicSpace(dynamicVariableSpace) ||
             dynamicVariableSpace.World != dynamicVariableSpace.World?.WorldManager?.FocusedWorld) return false;
-        var manager = dynamicVariableSpace.GetManager<User>("Target User", false);
+        var manager = dynamicVariableSpace.GetManager<User>(TargetUser, false);
         if (manager == null || manager.ReadableValueCount == 0) return false;
         return manager.Value == dynamicVariableSpace.LocalUser;
     }
