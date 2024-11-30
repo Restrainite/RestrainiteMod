@@ -13,7 +13,7 @@ internal static class PreventUsingTools
         {
             if (__instance.World == Userspace.UserspaceWorld) return result;
 
-            return !Restrainite.IsRestricted(PreventionType.PreventUsingTools) && result;
+            return !RestrainiteMod.IsRestricted(PreventionType.PreventUsingTools) && result;
         }
     }
 
@@ -24,7 +24,7 @@ internal static class PreventUsingTools
         {
             if (__instance.World == Userspace.UserspaceWorld) return result;
 
-            return !Restrainite.IsRestricted(PreventionType.PreventUsingTools) && result;
+            return !RestrainiteMod.IsRestricted(PreventionType.PreventUsingTools) && result;
         }
     }
 }

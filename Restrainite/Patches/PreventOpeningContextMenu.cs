@@ -12,14 +12,14 @@ internal class PreventOpeningContextMenu
 
         slot.World.LocalUser.CloseContextMenu(null!);
     }
-    
+
     [HarmonyPatch(typeof(InteractionHandler), "TryOpenContextMenu")]
     private class InteractionHandlerTryOpenContextMenuPatch
     {
         private static bool Prefix(InteractionHandler __instance)
         {
             return __instance.World == Userspace.UserspaceWorld ||
-                   !Restrainite.IsRestricted(PreventionType.PreventOpeningContextMenu);
+                   !RestrainiteMod.IsRestricted(PreventionType.PreventOpeningContextMenu);
         }
     }
 }

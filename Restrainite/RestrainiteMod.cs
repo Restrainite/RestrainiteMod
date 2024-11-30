@@ -5,14 +5,14 @@ using Restrainite.Enums;
 
 namespace Restrainite;
 
-public class Restrainite : ResoniteMod
+public class RestrainiteMod : ResoniteMod
 {
     internal static readonly Configuration Cfg = new();
     private static readonly DynamicVariableSync DynVarSync = new(Cfg);
 
     public override string Name => "Restrainite";
     public override string Author => "SnepDrone Zenuru";
-    public override string Version => "0.2.3";
+    public override string Version => "0.2.4";
     public override string Link => "https://github.com/SnepDrone/Restrainite";
 
     public override void DefineConfiguration(ModConfigurationDefinitionBuilder builder)

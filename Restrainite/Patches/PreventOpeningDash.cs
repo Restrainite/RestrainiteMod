@@ -18,7 +18,7 @@ internal class PreventOpeningDash
     {
         private static void Prefix(ref bool value)
         {
-            if (Restrainite.IsRestricted(PreventionType.PreventOpeningDash)) value = false;
+            if (RestrainiteMod.IsRestricted(PreventionType.PreventOpeningDash)) value = false;
         }
     }
 }

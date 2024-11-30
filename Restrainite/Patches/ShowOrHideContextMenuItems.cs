@@ -14,18 +14,18 @@ internal class ShowOrHideContextMenuItems
 
     private static bool ShouldDisableButton(LocaleString label)
     {
-        if (Restrainite.IsRestricted(PreventionType.ShowContextMenuItems))
+        if (RestrainiteMod.IsRestricted(PreventionType.ShowContextMenuItems))
         {
-            var hidden = !Restrainite.Cfg.GetStringList(PreventionType.ShowContextMenuItems)
+            var hidden = !RestrainiteMod.Cfg.GetStringList(PreventionType.ShowContextMenuItems)
                 .Contains(label.content);
             ResoniteMod.Msg(
                 $"Checking if the context menu item {label.content} is hidden by ShowContextMenuItems: {hidden}.");
             if (hidden) return true;
         }
 
-        if (Restrainite.IsRestricted(PreventionType.HideContextMenuItems))
+        if (RestrainiteMod.IsRestricted(PreventionType.HideContextMenuItems))
         {
-            var hidden = Restrainite.Cfg.GetStringList(PreventionType.HideContextMenuItems).Contains(label.content);
+            var hidden = RestrainiteMod.Cfg.GetStringList(PreventionType.HideContextMenuItems).Contains(label.content);
             ResoniteMod.Msg(
                 $"Checking if the context menu item {label.content} is hidden by HideContextMenuItems: {hidden}.");
             if (hidden) return true;

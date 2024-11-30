@@ -1,4 +1,6 @@
+using System;
 using System.Collections.Generic;
+using System.Reflection;
 using FrooxEngine;
 using HarmonyLib;
 using ResoniteModLoader;
@@ -6,72 +8,14 @@ using Restrainite.Enums;
 
 namespace Restrainite;
 
-internal class DynamicVariableSpaceFinder
+internal static class DynamicVariableSpaceFinder
 {
-    private static List<DynamicVariableSpace> _dynamicVariableSpaces = [];
-
-    private static void UpdateDynamicVariableSpacesList(DynamicVariableSpace dynamicVariableSpace)
-    {
-        var list = _dynamicVariableSpaces.FindAll(space =>
-            dynamicVariableSpace != space && space is { IsDestroyed: false, IsDisposed: false });
-
-        if (dynamicVariableSpace.CurrentName == "Restrainite" &&
-            dynamicVariableSpace is { IsDestroyed: false, IsDisposed: false })
-        {
-            ResoniteMod.Msg("Dynamic variable space Restrainite found {slot}");
-            list.Add(dynamicVariableSpace);
-        }
-
-        _dynamicVariableSpaces = list;
-    }
-
-    internal static bool IsActive(PreventionType preventionType)
-    {
-        foreach (var space in _dynamicVariableSpaces)
-        {
-            if (space is not { IsDestroyed: false, IsDisposed: false, Slot: not null } ||
-                space.Slot == space.Slot.ActiveUserRoot?.Slot ||
-                !HasLocalUserInUserRefVariable(space)) continue;
-
-            var manager = space.GetManager<bool>(preventionType.ToExpandedString(), false);
-            if (manager == null || manager.ReadableValueCount == 0) continue;
-            if (manager.Value) return true;
-        }
-
-        return false;
-    }
-
-    private static bool HasLocalUserInUserRefVariable(DynamicVariableSpace dynamicVariableSpace)
-    {
-        var manager = dynamicVariableSpace.GetManager<User>("Target User", false);
-        if (manager == null || manager.ReadableValueCount == 0) return false;
-        return manager.Value == dynamicVariableSpace.LocalUser;
-    }
-
-    [HarmonyPatch(typeof(DynamicVariableSpace), "OnStart")]
-    private static class DynamicVariableSpaceOnStartPatch
+    [HarmonyPatch(typeof(DynamicVariableSpace), "UpdateName")]
+    private static class DynamicVariableSpaceUpdateNamePatch
     {
         private static void Postfix(DynamicVariableSpace __instance)
         {
-            UpdateDynamicVariableSpacesList(__instance);
-        }
-    }
-
-    [HarmonyPatch(typeof(DynamicVariableSpace), "OnChanges")]
-    private static class DynamicVariableSpaceOnChangesPatch
-    {
-        private static void Postfix(DynamicVariableSpace __instance)
-        {
-            UpdateDynamicVariableSpacesList(__instance);
-        }
-    }
-
-    [HarmonyPatch(typeof(DynamicVariableSpace), "OnDuplicate")]
-    private static class DynamicVariableSpaceOnDuplicatePatch
-    {
-        private static void Postfix(DynamicVariableSpace __instance)
-        {
-            UpdateDynamicVariableSpacesList(__instance);
+            DynamicVariableSpaceSync.UpdateListAndGetIfValid(__instance, out _);
         }
     }
 
@@ -80,7 +24,60 @@ internal class DynamicVariableSpaceFinder
     {
         private static void Postfix(DynamicVariableSpace __instance)
         {
-            UpdateDynamicVariableSpacesList(__instance);
+            DynamicVariableSpaceSync.Remove(__instance);
+        }
+    }
+
+    [HarmonyPatch(typeof(DynamicVariableSpace))]
+    private static class DynamicVariableSpaceAllocateManagerBooleanPatch
+    {
+        private static IEnumerable<MethodBase> TargetMethods()
+        {
+            var boolType = typeof(DynamicVariableSpace)
+                .GetMethod("AllocateManager", BindingFlags.NonPublic | BindingFlags.Instance)?
+                .MakeGenericMethod(typeof(bool));
+            if (boolType != null) yield return boolType;
+        }
+
+        private static void Postfix(string name, DynamicVariableSpace __instance,
+            ref DynamicVariableSpace.ValueManager<bool> __result)
+        {
+            if (!DynamicVariableSpaceSync.UpdateListAndGetIfValid(__instance, out var dynamicVariableSpaceSync)
+                || dynamicVariableSpaceSync == null) return;
+            if (!PreventionTypes.NameToPreventionType.TryGetValue(name, out var preventionType)) return;
+
+            ResoniteMod.Msg($"DynamicVariableSpaceAllocateManagerBoolean found {preventionType}");
+
+            var booleanValueManagerWrapper = new BooleanValueManagerWrapper(name, preventionType, __instance);
+            dynamicVariableSpaceSync.Register(booleanValueManagerWrapper);
+            __result = booleanValueManagerWrapper;
+        }
+    }
+
+    [HarmonyPatch(typeof(DynamicVariableSpace.ValueManager<bool>), "SetValue")]
+    private static class DynamicVariableSpaceValueManagerPatch
+    {
+        private static void Prefix(bool value, DynamicVariableSpace.ValueManager<bool> __instance)
+        {
+            if (__instance is BooleanValueManagerWrapper wrapper) wrapper.SetValueOverride(value);
+        }
+    }
+
+    internal class BooleanValueManagerWrapper : DynamicVariableSpace.ValueManager<bool>
+    {
+        private readonly PreventionType _preventionType;
+
+        internal BooleanValueManagerWrapper(string name, PreventionType preventionType, DynamicVariableSpace space) :
+            base(name, space)
+        {
+            _preventionType = preventionType;
+        }
+
+        internal event Action<PreventionType, bool>? OnChange;
+
+        public void SetValueOverride(bool value)
+        {
+            OnChange?.Invoke(_preventionType, value);
         }
     }
 }

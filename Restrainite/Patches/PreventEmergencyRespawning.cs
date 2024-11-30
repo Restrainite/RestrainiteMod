@@ -11,7 +11,7 @@ internal class PreventEmergencyRespawning
     {
         private static void Prefix(ref float ___panicCharge, InteractionHandler __instance)
         {
-            if (Restrainite.IsRestricted(PreventionType.PreventEmergencyRespawning))
+            if (RestrainiteMod.IsRestricted(PreventionType.PreventEmergencyRespawning))
                 ___panicCharge = -__instance.Time.Delta;
         }
     }

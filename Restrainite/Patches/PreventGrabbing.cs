@@ -24,7 +24,7 @@ internal class PreventGrabbing
         {
             _interactionHandler = __instance;
             return __instance.World == Userspace.UserspaceWorld ||
-                   !Restrainite.IsRestricted(PreventionType.PreventGrabbing);
+                   !RestrainiteMod.IsRestricted(PreventionType.PreventGrabbing);
         }
     }
 

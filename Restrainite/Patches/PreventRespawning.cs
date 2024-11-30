@@ -13,7 +13,7 @@ internal class PreventRespawning
         private static bool Prefix(Slot __instance)
         {
             var userRootSlot = __instance.Engine.WorldManager.FocusedWorld.LocalUser.Root.Slot;
-            return __instance != userRootSlot || !Restrainite.IsRestricted(PreventionType.PreventRespawning);
+            return __instance != userRootSlot || !RestrainiteMod.IsRestricted(PreventionType.PreventRespawning);
         }
     }
 }

@@ -12,7 +12,7 @@ internal class PreventPhysicalTouch
         private static void Postfix(ref ITouchable? __result)
         {
             if (__result?.World == Userspace.UserspaceWorld) return;
-            if (Restrainite.IsRestricted(PreventionType.PreventPhysicalTouch)) __result = null!;
+            if (RestrainiteMod.IsRestricted(PreventionType.PreventPhysicalTouch)) __result = null!;
         }
     }
 }

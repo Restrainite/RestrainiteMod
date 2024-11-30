@@ -13,7 +13,7 @@ internal class PreventEquippingAvatar
     {
         private static bool Prefix(ref bool __result)
         {
-            if (!Restrainite.IsRestricted(PreventionType.PreventEquippingAvatar))
+            if (!RestrainiteMod.IsRestricted(PreventionType.PreventEquippingAvatar))
                 return true;
 
             __result = false;
@@ -27,7 +27,7 @@ internal class PreventEquippingAvatar
     {
         private static bool Prefix(ref bool __result)
         {
-            if (!Restrainite.IsRestricted(PreventionType.PreventEquippingAvatar))
+            if (!RestrainiteMod.IsRestricted(PreventionType.PreventEquippingAvatar))
                 return true;
 
             __result = false;

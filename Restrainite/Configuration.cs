@@ -13,10 +13,6 @@ public class Configuration
     private readonly Dictionary<WorldPermissionType, ModConfigurationKey<PresetChangeType>>
         _changeOnWorldPermissionChangeDict = new();
 
-    private readonly Dictionary<PreventionType, int> _currentPreventCounter = new();
-
-    private readonly BitArray _currentPreventValues = new(PreventionTypes.Max, false);
-
     private readonly Dictionary<PreventionType, List<string>> _currentStringListDict = new();
 
     private readonly Dictionary<PreventionType, ModConfigurationKey<bool>> _displayedPreventionTypes = new();
@@ -43,7 +39,6 @@ public class Configuration
         foreach (var presetType in PresetTypes.List)
             _presetStore.Add(presetType, new ModConfigurationKey<bool[]>(
                 $"PresetStore{presetType}", "", () => [], true));
-        foreach (var preventionType in PreventionTypes.List) _currentPreventCounter.Add(preventionType, 0);
     }
 
     public void DefineConfiguration(ModConfigurationDefinitionBuilder builder)
@@ -213,14 +208,7 @@ public class Configuration
 
     internal bool IsRestricted(PreventionType preventionType)
     {
-        return IsPreventionTypeEnabled(preventionType) && (_currentPreventValues[(int)preventionType] ||
-                                                           DynamicVariableSpaceFinder.IsActive(preventionType));
-    }
-
-    internal int GetCounter(PreventionType preventionType)
-    {
-        var found = _currentPreventCounter.TryGetValue(preventionType, out var counter);
-        return IsPreventionTypeEnabled(preventionType) && found ? counter : 0;
+        return IsPreventionTypeEnabled(preventionType) && DynamicVariableSpaceSync.GetGlobalState(preventionType);
     }
 
     internal string GetString(PreventionType preventionType)
@@ -252,21 +240,6 @@ public class Configuration
         return foundConfigValue && configValue;
     }
 
-    internal bool UpdateRestrictionState(PreventionType preventionType, bool value)
-    {
-        if (value == _currentPreventValues[(int)preventionType]) return true;
-        _currentPreventValues[(int)preventionType] = value;
-        return false;
-    }
-
-    internal bool UpdateCounter(PreventionType preventionType, int value)
-    {
-        var found = _currentPreventCounter.TryGetValue(preventionType, out var counter);
-        if (!found || value == counter) return true;
-        _currentPreventCounter[preventionType] = value;
-        return false;
-    }
-
     internal bool UpdateString(PreventionType preventionType, string value)
     {
         if (!preventionType.HasStringVariable()) return true;
@@ -286,6 +259,11 @@ public class Configuration
         _config.Set(modConfigurationKey, value);
     }
 
+    public bool ShouldHide()
+    {
+        return _config?.GetValue(_presetConfig) == PresetType.None;
+    }
+    
     public bool OnWorldPermission(SessionAccessLevel? sessionAccessLevel, bool hideFromListing)
     {
         var currentPreset = _config?.GetValue(_presetConfig);

@@ -15,7 +15,7 @@ internal class PreventLaserTouch
         private static void Postfix(ref ITouchable? __result)
         {
             if (__result?.World == Userspace.UserspaceWorld) return;
-            if (Restrainite.IsRestricted(PreventionType.PreventLaserTouch)) __result = null!;
+            if (RestrainiteMod.IsRestricted(PreventionType.PreventLaserTouch)) __result = null!;
         }
     }
 }
