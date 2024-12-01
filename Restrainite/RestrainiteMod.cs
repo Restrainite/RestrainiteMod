@@ -8,7 +8,7 @@ namespace Restrainite;
 public class RestrainiteMod : ResoniteMod
 {
     internal static readonly Configuration Cfg = new();
-    private static readonly DynamicVariableSync DynVarSync = new(Cfg);
+    private static readonly DynamicVariableStatus DynVarStatus = new(Cfg);
 
     public override string Name => "Restrainite";
     public override string Author => "SnepDrone Zenuru";
@@ -39,7 +39,7 @@ public class RestrainiteMod : ResoniteMod
         private static void Postfix(User value)
         {
             Msg($"Restrainite inject into LocalUser {value}.");
-            DynVarSync.InjectIntoUser(value);
+            DynVarStatus.InjectIntoUser(value);
         }
     }
 }

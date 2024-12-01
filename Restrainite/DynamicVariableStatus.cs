@@ -10,7 +10,7 @@ using Restrainite.Patches;
 
 namespace Restrainite;
 
-public class DynamicVariableSync
+public class DynamicVariableStatus
 {
     private const string RestrainiteRootSlotName = "Restrainite Status";
     private const string DynamicVariableSpaceStatusName = "Restrainite Status";
@@ -19,7 +19,7 @@ public class DynamicVariableSync
 
     private readonly Configuration _configuration;
 
-    public DynamicVariableSync(Configuration configuration)
+    public DynamicVariableStatus(Configuration configuration)
     {
         _configuration = configuration;
         DynamicVariableSpaceSync.OnGlobalStateChanged += SendDynamicImpulse;
