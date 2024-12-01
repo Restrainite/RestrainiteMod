@@ -18,7 +18,10 @@ internal static class PreventOpeningDash
             !RestrainiteMod.Cfg.IsPreventionTypeEnabled(preventionType))
             return;
 
-        Userspace.UserspaceWorld.GetGloballyRegisteredComponent<UserspaceRadiantDash>().Open = false;
+        Userspace.Current.RunSynchronously(delegate
+        {
+            Userspace.UserspaceWorld.GetGloballyRegisteredComponent<UserspaceRadiantDash>().Open = false;
+        });
     }
 
     [HarmonyPatch(typeof(UserspaceRadiantDash), nameof(UserspaceRadiantDash.Open), MethodType.Setter)]
