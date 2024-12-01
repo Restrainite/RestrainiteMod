@@ -4,9 +4,14 @@ using Restrainite.Enums;
 
 namespace Restrainite.Patches;
 
-internal class PreventOpeningContextMenu
+internal static class PreventOpeningContextMenu
 {
-    public static void OnChange(Slot slot, PreventionType preventionType, bool value)
+    static PreventOpeningContextMenu()
+    {
+        DynamicVariableSpaceSync.OnGlobalStateChanged += OnChange;
+    }
+
+    private static void OnChange(Slot slot, PreventionType preventionType, bool value)
     {
         if (preventionType != PreventionType.PreventOpeningContextMenu ||
             !value ||

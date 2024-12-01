@@ -4,12 +4,16 @@ using Restrainite.Enums;
 
 namespace Restrainite.Patches;
 
-internal class PreventGrabbing
+internal static class PreventGrabbing
 {
     private static InteractionHandler? _interactionHandler;
 
+    static PreventGrabbing()
+    {
+        DynamicVariableSpaceSync.OnGlobalStateChanged += OnChange;
+    }
 
-    public static void OnChange(Slot slot, PreventionType preventionType, bool value)
+    private static void OnChange(Slot slot, PreventionType preventionType, bool value)
     {
         if (preventionType != PreventionType.PreventGrabbing ||
             !value ||

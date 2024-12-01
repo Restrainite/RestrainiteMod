@@ -9,6 +9,7 @@ public class RestrainiteMod : ResoniteMod
 {
     internal static readonly Configuration Cfg = new();
     private static readonly DynamicVariableStatus DynVarStatus = new(Cfg);
+    private static readonly ImpulseSender ImpulseSender = new(Cfg);
 
     public override string Name => "Restrainite";
     public override string Author => "SnepDrone Zenuru";

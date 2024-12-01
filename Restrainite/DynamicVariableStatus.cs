@@ -2,52 +2,18 @@ using System;
 using System.Collections.Generic;
 using System.Reflection;
 using FrooxEngine;
-using FrooxEngine.ProtoFlux;
 using HarmonyLib;
 using ResoniteModLoader;
 using Restrainite.Enums;
-using Restrainite.Patches;
 
 namespace Restrainite;
 
-public class DynamicVariableStatus
+public class DynamicVariableStatus(Configuration configuration)
 {
     private const string RestrainiteRootSlotName = "Restrainite Status";
     private const string DynamicVariableSpaceStatusName = "Restrainite Status";
-    private const string ImpulsePrefix = "Restrainite";
+
     private static readonly FieldInfo UserRootField = AccessTools.Field(typeof(User), "userRoot");
-
-    private readonly Configuration _configuration;
-
-    public DynamicVariableStatus(Configuration configuration)
-    {
-        _configuration = configuration;
-        DynamicVariableSpaceSync.OnGlobalStateChanged += SendDynamicImpulse;
-        DynamicVariableSpaceSync.OnGlobalStateChanged += PreventGrabbing.OnChange;
-        DynamicVariableSpaceSync.OnGlobalStateChanged += PreventOpeningDash.OnChange;
-        DynamicVariableSpaceSync.OnGlobalStateChanged += PreventOpeningContextMenu.OnChange;
-    }
-
-    private void SendDynamicImpulse<T>(Slot restrainiteSlot, PreventionType preventionType, T value)
-    {
-        if (restrainiteSlot.IsDestroyed || restrainiteSlot.IsDestroying) return;
-        var slot = restrainiteSlot.Parent;
-        if (slot == null) return;
-        slot.RunInUpdates(0, () =>
-        {
-            if (slot.IsDestroyed || slot.IsDestroying) return;
-            if (slot.Engine.WorldManager.FocusedWorld != slot.World) return;
-            if (!_configuration.IsPreventionTypeEnabled(preventionType)) return;
-            ProtoFluxHelper.DynamicImpulseHandler.TriggerAsyncDynamicImpulseWithArgument(
-                slot, $"{ImpulsePrefix} Change", true,
-                $"{preventionType.ToExpandedString()}:{typeof(T)}:{value}"
-            );
-            ProtoFluxHelper.DynamicImpulseHandler.TriggerAsyncDynamicImpulseWithArgument(
-                slot, $"{ImpulsePrefix} {preventionType.ToExpandedString()}", true,
-                value
-            );
-        });
-    }
 
     internal void InjectIntoUser(User value)
     {
@@ -76,23 +42,23 @@ public class DynamicVariableStatus
             slot.RunInUpdates(0, () =>
                 ShowOrHideRestrainiteRootSlot(slot, true));
         };
-        _configuration.OnPresetChange += onPresetChanged;
+        configuration.OnPresetChange += onPresetChanged;
 
         slot.OnPrepareDestroy += _ =>
         {
             slot.World.Configuration.AccessLevel.Changed -= onChanged;
             slot.World.Configuration.HideFromListing.Changed -= onChanged;
             userRoot.World.WorldManager.WorldFocused -= worldFocused;
-            _configuration.OnPresetChange -= onPresetChanged;
+            configuration.OnPresetChange -= onPresetChanged;
         };
     }
 
     private void ShowOrHideRestrainiteRootSlot(Slot slot, bool skipWorldPermissions = false)
     {
         var show = slot.World == slot.World.WorldManager.FocusedWorld &&
-                   !_configuration.ShouldHide() &&
+                   !configuration.ShouldHide() &&
                    (skipWorldPermissions ||
-                    _configuration.OnWorldPermission(slot.World.AccessLevel, slot.World.HideFromListing));
+                    configuration.OnWorldPermission(slot.World.AccessLevel, slot.World.HideFromListing));
         ResoniteMod.Msg($"ShowOrHideRestrainiteRootSlot {show}");
         slot.RunInUpdates(0, show ? AddRestrainiteSlot(slot) : RemoveRestrainiteSlot(slot));
     }
@@ -116,7 +82,7 @@ public class DynamicVariableStatus
             var handlerDict = new Dictionary<PreventionType, ModConfigurationKey.OnChangedHandler>();
             foreach (var preventionType in PreventionTypes.List)
             {
-                if (_configuration.GetDisplayedPreventionTypeConfig(preventionType, out var key)) continue;
+                if (configuration.GetDisplayedPreventionTypeConfig(preventionType, out var key)) continue;
                 AddOrRemoveComponents(restrainiteSlot, preventionType);
                 ModConfigurationKey.OnChangedHandler rerunUpdate = _ =>
                 {
@@ -132,7 +98,7 @@ public class DynamicVariableStatus
             {
                 foreach (var handler in handlerDict)
                 {
-                    if (_configuration.GetDisplayedPreventionTypeConfig(handler.Key, out var key)) continue;
+                    if (configuration.GetDisplayedPreventionTypeConfig(handler.Key, out var key)) continue;
                     key.OnChanged -= handler.Value;
                 }
             };
@@ -157,7 +123,7 @@ public class DynamicVariableStatus
 
     private void AddOrRemoveComponents(Slot restrainiteSlot, PreventionType preventionType)
     {
-        if (_configuration.IsPreventionTypeEnabled(preventionType))
+        if (configuration.IsPreventionTypeEnabled(preventionType))
             CreateComponents(restrainiteSlot, preventionType);
         else
             RemoveComponents(restrainiteSlot, preventionType);
@@ -172,7 +138,7 @@ public class DynamicVariableStatus
 
         // Create State Component
         var dynamicVariableBooleanComponent = new DynamicVariableComponent<bool>(preventionType, slot,
-            $"{DynamicVariableSpaceStatusName}/{expandedName}", _configuration.IsRestricted(preventionType));
+            $"{DynamicVariableSpaceStatusName}/{expandedName}", configuration.IsRestricted(preventionType));
         DynamicVariableSpaceSync.OnGlobalStateChanged +=
             dynamicVariableBooleanComponent.OnInternalStateChange;
         dynamicVariableBooleanComponent.OnDestroyed += () =>

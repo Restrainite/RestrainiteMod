@@ -4,9 +4,14 @@ using Restrainite.Enums;
 
 namespace Restrainite.Patches;
 
-internal class PreventOpeningDash
+internal static class PreventOpeningDash
 {
-    public static void OnChange(Slot slot, PreventionType preventionType, bool value)
+    static PreventOpeningDash()
+    {
+        DynamicVariableSpaceSync.OnGlobalStateChanged += OnChange;
+    }
+
+    private static void OnChange(Slot slot, PreventionType preventionType, bool value)
     {
         if (preventionType != PreventionType.PreventOpeningDash ||
             !value ||
