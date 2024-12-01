@@ -63,10 +63,6 @@ With the default settings, restarting the game will remove all restrictions. If 
 completely stuck, you can always delete or modify the Restrainite settings file. 
 For MonkeyLoader that is under `MonkeyLoader/Configs/Restrainite.json`.
 
-## Contributing
+## Building from source and contributing
 
-The mod has the following guidelines:
-
-- No feature should require spawning an object or require creating complex objects in the world.
-- Do not try to fix social issues with code.
-- Cleanup after injecting code or objects. Leave no trace behind. Always make things non-persistent.
+See [CONTRIBUTING.md](./CONTRIBUTING.md).
