@@ -22,7 +22,9 @@ internal enum PreventionType
     PreventEmergencyRespawning,
     PreventSwitchingWorld,
     ShowContextMenuItems,
-    HideContextMenuItems
+    HideContextMenuItems,
+    ShowDashScreens,
+    HideDashScreens
 }
 
 internal static class PreventionTypes
@@ -42,29 +44,5 @@ internal static class PreventionTypes
     internal static string ToExpandedString(this PreventionType type)
     {
         return Dictionary[type];
-    }
-
-    internal static bool HasStringVariable(this PreventionType type)
-    {
-        return type switch
-        {
-            PreventionType.PreventEquippingAvatar => false,
-            PreventionType.PreventOpeningContextMenu => false,
-            PreventionType.PreventUsingTools => false,
-            PreventionType.PreventOpeningDash => false,
-            PreventionType.PreventGrabbing => false,
-            PreventionType.PreventHearing => false,
-            PreventionType.EnforceSelectiveHearing => true,
-            PreventionType.PreventLaserTouch => false,
-            PreventionType.PreventPhysicalTouch => false,
-            PreventionType.PreventSpeaking => false,
-            PreventionType.EnforceWhispering => false,
-            PreventionType.PreventRespawning => false,
-            PreventionType.PreventEmergencyRespawning => false,
-            PreventionType.PreventSwitchingWorld => false,
-            PreventionType.ShowContextMenuItems => true,
-            PreventionType.HideContextMenuItems => true,
-            _ => throw new ArgumentOutOfRangeException(nameof(type), type, null)
-        };
     }
 }
