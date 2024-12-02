@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
+using Elements.Core;
 using FrooxEngine;
 using ResoniteModLoader;
 using Restrainite.Enums;
@@ -68,8 +69,7 @@ internal class DynamicVariableSpaceSync
 
     private void NotifyGlobalStateChange(PreventionType preventionType, bool value)
     {
-        if (!_dynamicVariableSpace.TryGetTarget(out var dynamicVariableSpace) || dynamicVariableSpace == null)
-            return;
+        if (!GetDynamicVariableSpace(out var dynamicVariableSpace)) return;
         if (!RestrainiteMod.Cfg.IsPreventionTypeEnabled(preventionType)) return;
         dynamicVariableSpace.RunInUpdates(0, () =>
         {
@@ -96,8 +96,7 @@ internal class DynamicVariableSpaceSync
 
     private IImmutableSet<string> GetLocalStrings(PreventionType preventionType)
     {
-        if (!_dynamicVariableSpace.TryGetTarget(out var dynamicVariableSpace) || dynamicVariableSpace == null)
-            return ImmutableHashSet<string>.Empty;
+        if (!GetDynamicVariableSpace(out var dynamicVariableSpace)) return ImmutableHashSet<string>.Empty;
         var manager = dynamicVariableSpace.GetManager<string>(preventionType.ToExpandedString(), false);
         if (manager == null || manager.ReadableValueCount == 0) return ImmutableHashSet<string>.Empty;
         return SplitStringToList(manager.Value ?? string.Empty);
@@ -128,6 +127,7 @@ internal class DynamicVariableSpaceSync
                     return true;
                 }
 
+                Spaces[index].Unregister(dynamicVariableSpace);
                 Spaces.RemoveAt(index);
             }
             else
@@ -136,6 +136,7 @@ internal class DynamicVariableSpaceSync
                 {
                     dynamicVariableSpaceSync = new DynamicVariableSpaceSync(dynamicVariableSpace);
                     Spaces.Add(dynamicVariableSpaceSync);
+                    dynamicVariableSpaceSync.Register(dynamicVariableSpace);
                     return true;
                 }
             }
@@ -145,6 +146,80 @@ internal class DynamicVariableSpaceSync
         return false;
     }
 
+    private void Register(DynamicVariableSpace dynamicVariableSpace)
+    {
+        dynamicVariableSpace.Slot.ComponentAdded += ComponentAdded;
+        foreach (var dynamicReferenceVariable in
+                 dynamicVariableSpace.Slot.GetComponents<DynamicReferenceVariable<User>>(_ => true))
+            ComponentAdded(dynamicReferenceVariable);
+    }
+
+    private void Unregister(DynamicVariableSpace dynamicVariableSpace)
+    {
+        dynamicVariableSpace.Slot.ComponentAdded -= ComponentAdded;
+        foreach (var dynamicReferenceVariable in
+                 dynamicVariableSpace.Slot.GetComponents<DynamicReferenceVariable<User>>(_ => true))
+        {
+            dynamicReferenceVariable.VariableName.OnValueChange -= OnUserVariableNameUpdate;
+            dynamicReferenceVariable.Reference.OnTargetChange -= OnUserRefUpdate;
+        }
+    }
+
+    private void ComponentAdded(Component component)
+    {
+        if (component is not DynamicReferenceVariable<User> dynamicReferenceVariable) return;
+
+        dynamicReferenceVariable.VariableName.OnValueChange += OnUserVariableNameUpdate;
+        if (TargetUser.Equals(dynamicReferenceVariable.VariableName.Value))
+            OnUserVariableNameUpdate(dynamicReferenceVariable.VariableName);
+    }
+
+    private void OnUserVariableNameUpdate(SyncField<string> syncField)
+    {
+        var component = syncField.Component;
+        if (component is not DynamicReferenceVariable<User> dynamicReferenceVariable) return;
+
+        if (TargetUser.Equals(syncField.Value))
+            dynamicReferenceVariable.Reference.OnTargetChange += OnUserRefUpdate;
+        else
+            dynamicReferenceVariable.Reference.OnTargetChange -= OnUserRefUpdate;
+
+        OnUserRefUpdate(dynamicReferenceVariable.Reference);
+    }
+
+    private void OnUserRefUpdate(SyncField<RefID> syncField)
+    {
+        if (syncField.Component is not DynamicReferenceVariable<User> dynamicReferenceVariable) return;
+
+        // Force refresh value in DynamicVariableSpace Manager 
+        dynamicReferenceVariable.UpdateLinking();
+        CheckLocalState();
+    }
+
+    private void CheckLocalState()
+    {
+        if (!GetDynamicVariableSpace(out var dynamicVariableSpace)) return;
+
+        var active = IsActiveForLocalUser();
+        if (!active)
+        {
+            return;
+        }
+
+        foreach (var preventionType in PreventionTypes.List)
+        {
+            var manager = dynamicVariableSpace.GetManager<bool>(preventionType.ToExpandedString(), false);
+            var state = manager != null && manager.ReadableValueCount > 0 && manager.Value;
+            ResoniteMod.Msg($"State of {preventionType} changed to {state} {manager?.Value}");
+            if (_localState[(int)preventionType] != state) UpdateLocalState(preventionType, state);
+        }
+    }
+
+    private bool GetDynamicVariableSpace(out DynamicVariableSpace dynamicVariableSpace)
+    {
+        return _dynamicVariableSpace.TryGetTarget(out dynamicVariableSpace);
+    }
+
     private static bool IsRestrainiteDynamicSpace(DynamicVariableSpace dynamicVariableSpace)
     {
         return dynamicVariableSpace is { IsDestroyed: false, IsDisposed: false, CurrentName: DynamicVariableSpaceName };
@@ -152,8 +227,7 @@ internal class DynamicVariableSpaceSync
 
     private bool IsActiveForLocalUser()
     {
-        if (!_dynamicVariableSpace.TryGetTarget(out var dynamicVariableSpace) || dynamicVariableSpace == null)
-            return false;
+        if (!GetDynamicVariableSpace(out var dynamicVariableSpace)) return false;
         if (!IsRestrainiteDynamicSpace(dynamicVariableSpace) ||
             dynamicVariableSpace.World != dynamicVariableSpace.World?.WorldManager?.FocusedWorld) return false;
         var manager = dynamicVariableSpace.GetManager<User>(TargetUser, false);
