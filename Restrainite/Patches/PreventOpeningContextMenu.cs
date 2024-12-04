@@ -4,6 +4,7 @@ using Restrainite.Enums;
 
 namespace Restrainite.Patches;
 
+[HarmonyPatch]
 internal static class PreventOpeningContextMenu
 {
     static PreventOpeningContextMenu()
@@ -21,13 +22,11 @@ internal static class PreventOpeningContextMenu
         slot.World.LocalUser.CloseContextMenu(null!);
     }
 
+    [HarmonyPrefix]
     [HarmonyPatch(typeof(InteractionHandler), "TryOpenContextMenu")]
-    private class InteractionHandlerTryOpenContextMenuPatch
+    private static bool PreventOpeningContextMenu_InteractionHandlerTryOpenContextMenu_Prefix(InteractionHandler __instance)
     {
-        private static bool Prefix(InteractionHandler __instance)
-        {
-            return __instance.World == Userspace.UserspaceWorld ||
-                   !RestrainiteMod.IsRestricted(PreventionType.PreventOpeningContextMenu);
-        }
+        return __instance.World == Userspace.UserspaceWorld ||
+                !RestrainiteMod.IsRestricted(PreventionType.PreventOpeningContextMenu);
     }
 }

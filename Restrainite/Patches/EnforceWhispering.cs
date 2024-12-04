@@ -4,24 +4,21 @@ using Restrainite.Enums;
 
 namespace Restrainite.Patches;
 
+[HarmonyPatch]
 internal class EnforceWhispering
 {
+    [HarmonyPostfix]
     [HarmonyPatch(typeof(User), nameof(User.VoiceMode), MethodType.Getter)]
-    private class VoiceModeGetterPatch
+    private static void EnforceWhispering_UserVoiceMode_Getter_Postfix(ref VoiceMode __result, User __instance)
     {
-        private static void Postfix(ref VoiceMode __result, User __instance)
-        {
-            if (__instance.IsLocalUser && RestrainiteMod.IsRestricted(PreventionType.EnforceWhispering))
-                __result = VoiceMode.Whisper;
-        }
+        if (__instance.IsLocalUser && RestrainiteMod.IsRestricted(PreventionType.EnforceWhispering))
+            __result = VoiceMode.Whisper;
     }
 
+    [HarmonyPrefix]
     [HarmonyPatch(typeof(User), nameof(User.VoiceMode), MethodType.Setter)]
-    private class VoiceModeSetterPatch
+    private static bool EnforceWhispering_UserVoiceMode_Setter_Prefix(User __instance)
     {
-        private static bool Prefix(User __instance)
-        {
-            return !(__instance.IsLocalUser && RestrainiteMod.IsRestricted(PreventionType.EnforceWhispering));
-        }
+        return !(__instance.IsLocalUser && RestrainiteMod.IsRestricted(PreventionType.EnforceWhispering));
     }
 }

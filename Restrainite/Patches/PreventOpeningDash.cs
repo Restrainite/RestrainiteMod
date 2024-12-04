@@ -4,6 +4,7 @@ using Restrainite.Enums;
 
 namespace Restrainite.Patches;
 
+[HarmonyPatch]
 internal static class PreventOpeningDash
 {
     static PreventOpeningDash()
@@ -24,12 +25,10 @@ internal static class PreventOpeningDash
         });
     }
 
+    [HarmonyPrefix]
     [HarmonyPatch(typeof(UserspaceRadiantDash), nameof(UserspaceRadiantDash.Open), MethodType.Setter)]
-    private class UserspaceRadiantDashBlockOpenClosePatch
+    private static void PreventOpeningDash_UserspaceRadiantDashOpen_Setter_Prefix(ref bool value)
     {
-        private static void Prefix(ref bool value)
-        {
-            if (RestrainiteMod.IsRestricted(PreventionType.PreventOpeningDash)) value = false;
-        }
+        if (RestrainiteMod.IsRestricted(PreventionType.PreventOpeningDash)) value = false;
     }
 }
