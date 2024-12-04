@@ -1,15 +1,19 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Collections.Immutable;
+using FrooxEngine;
 using ResoniteModLoader;
 using Restrainite.Enums;
-using SkyFrost.Base;
 
 namespace Restrainite;
 
-public class Configuration
+internal class Configuration
 {
+    private readonly ModConfigurationKey<bool> _allowRestrictionsFromFocusedWorldOnly = new(
+        "Allow Restrictions from Focused World only",
+        "Restrictions can only be modified from the focused world",
+        () => true);
+
     private readonly Dictionary<WorldPermissionType, ModConfigurationKey<PresetChangeType>>
         _changeOnWorldPermissionChangeDict = new();
 
@@ -26,10 +30,7 @@ public class Configuration
 
     private readonly Dictionary<PresetType, ModConfigurationKey<bool[]>> _presetStore = new();
 
-
     private ModConfiguration? _config;
-
-    private BitArray? _currentPreventionTypes;
 
     public Configuration()
     {
@@ -38,13 +39,15 @@ public class Configuration
                 $"PresetStore{presetType}", "", () => [], true));
     }
 
+    internal event Action? ShouldRecheckPermissions;
+
     public void DefineConfiguration(ModConfigurationDefinitionBuilder builder)
     {
         ResoniteMod.Msg("Define configuration");
         builder.Key(_presetConfig);
         builder.Key(_presetStartupConfig);
 
-        foreach (var presetType in PresetTypes.List) builder.Key(_presetStore[presetType]);
+        foreach (var key in _presetStore.Values) builder.Key(key);
 
         foreach (var preventionType in PreventionTypes.List)
         {
@@ -63,6 +66,8 @@ public class Configuration
             builder.Key(key);
             _changeOnWorldPermissionChangeDict.Add(worldPermissionType, key);
         }
+
+        builder.Key(_allowRestrictionsFromFocusedWorldOnly);
     }
 
     public void Init(ModConfiguration? config = null)
@@ -75,8 +80,15 @@ public class Configuration
         var presetOnStartup = _config?.GetValue(_presetStartupConfig) ?? PresetChangeType.None;
         if (presetOnStartup != PresetChangeType.DoNotChange) _config?.Set(_presetConfig, (PresetType)presetOnStartup);
 
-        var currentPreset = _config?.GetValue(_presetConfig) ?? PresetType.None;
-        _currentPreventionTypes = GetCustomStored(currentPreset);
+        foreach (var key in _presetStore.Values)
+            key.OnChanged += _ => ShouldRecheckPermissions?.Invoke();
+
+        foreach (var key in _changeOnWorldPermissionChangeDict.Values)
+            key.OnChanged += _ => ShouldRecheckPermissions?.Invoke();
+
+        _presetConfig.OnChanged += _ => ShouldRecheckPermissions?.Invoke();
+        _allowRestrictionsFromFocusedWorldOnly.OnChanged += _ => ShouldRecheckPermissions?.Invoke();
+
         _config?.Save(true);
     }
 
@@ -114,7 +126,6 @@ public class Configuration
                     var customStored = GetCustomStored(presetType);
                     customStored.Set((int)preventionType, boolValue);
                     SetCustomStored(presetType, customStored);
-                    _currentPreventionTypes = customStored;
                     ResoniteMod.Msg($"Config for {preventionType} changed {presetType} to {boolValue}.");
                     return;
             }
@@ -127,7 +138,6 @@ public class Configuration
         customStored.SetAll(!value);
         customStored.Set((int)preventionType, value);
         SetCustomStored(PresetType.Customized, customStored);
-        _currentPreventionTypes = customStored;
         _config?.Set(_presetConfig, PresetType.Customized);
     }
 
@@ -156,34 +166,22 @@ public class Configuration
     {
         ResoniteMod.Msg($"Restrainite preset changed to {value}.");
         var selectedPreset = value as PresetType? ?? PresetType.None;
-        _currentPreventionTypes = GetCustomStored(selectedPreset);
+        var preventionTypeValues = GetCustomStored(selectedPreset);
         foreach (var preventionType in PreventionTypes.List)
         {
             if (GetDisplayedPreventionTypeConfig(preventionType, out var configurationKey)) continue;
-            var preventionTypeValue = _currentPreventionTypes[(int)preventionType];
+            var preventionTypeValue = preventionTypeValues[(int)preventionType];
             if (_config?.GetValue(configurationKey) == preventionTypeValue) continue;
             _config?.Set(configurationKey, preventionTypeValue);
-            ResoniteMod.Msg($"{preventionType} set to {preventionTypeValue}.");
+            ResoniteMod.Msg($"{preventionType.ToExpandedString()} set to {preventionTypeValue}.");
         }
     }
 
-    internal bool GetDisplayedPreventionTypeConfig(PreventionType preventionType,
+    private bool GetDisplayedPreventionTypeConfig(PreventionType preventionType,
         out ModConfigurationKey<bool> configurationKey)
     {
         var found = _displayedPreventionTypes.TryGetValue(preventionType, out configurationKey);
         return !found || configurationKey == null;
-    }
-
-    internal bool IsRestricted(PreventionType preventionType)
-    {
-        return IsPreventionTypeEnabled(preventionType) && DynamicVariableSpaceSync.GetGlobalState(preventionType);
-    }
-
-    internal IImmutableSet<string> GetStrings(PreventionType preventionType)
-    {
-        return IsPreventionTypeEnabled(preventionType)
-            ? DynamicVariableSpaceSync.GetGlobalStrings(preventionType)
-            : ImmutableHashSet<string>.Empty;
     }
 
     internal bool IsPreventionTypeEnabled(PreventionType preventionType)
@@ -194,46 +192,52 @@ public class Configuration
         return foundConfigValue && configValue;
     }
 
-    public bool ShouldHide()
-    {
-        return _config?.GetValue(_presetConfig) == PresetType.None;
-    }
-
-    public bool OnWorldPermission(SessionAccessLevel? sessionAccessLevel, bool hideFromListing)
+    internal void OnWorldPermissionChanged(World world)
     {
         var currentPreset = _config?.GetValue(_presetConfig);
-        if (sessionAccessLevel == null) return currentPreset != PresetType.None;
-        var worldPermissionType =
-            WorldPermissionTypes.FromResonite((SessionAccessLevel)sessionAccessLevel, hideFromListing);
-        var key = _changeOnWorldPermissionChangeDict[worldPermissionType];
-        if (key == null) return currentPreset != PresetType.None;
-        var changePreset = _config?.GetValue(key);
+        var changePreset = GetWorldPresetChangeType(world);
         switch (changePreset)
         {
             case PresetChangeType.None:
-                if (currentPreset == PresetType.None) return false;
+                if (currentPreset == PresetType.None) return;
                 _config?.Set(_presetConfig, PresetType.None);
-                return false;
+                return;
             case PresetChangeType.All:
             case PresetChangeType.StoredPresetAlpha:
             case PresetChangeType.StoredPresetBeta:
             case PresetChangeType.StoredPresetGamma:
             case PresetChangeType.StoredPresetDelta:
             case PresetChangeType.StoredPresetOmega:
-                if (currentPreset == (PresetType)changePreset) return true;
+                if (currentPreset == (PresetType)changePreset) return;
                 _config?.Set(_presetConfig, (PresetType)changePreset);
-                return true;
+                return;
             case PresetChangeType.DoNotChange:
             case null:
-                return currentPreset != PresetType.None;
+                return;
             default:
                 throw new ArgumentOutOfRangeException();
         }
     }
 
-    internal event ModConfigurationKey.OnChangedHandler? OnPresetChange
+    private PresetChangeType? GetWorldPresetChangeType(World? world)
     {
-        add => _presetConfig.OnChanged += value;
-        remove => _presetConfig.OnChanged -= value;
+        var worldPermissionType = world?.ToWorldPermissionType();
+        if (worldPermissionType == null) return null;
+        var found = _changeOnWorldPermissionChangeDict.TryGetValue(
+            (WorldPermissionType)worldPermissionType, out var key);
+        return !found || key == null ? null! : _config?.GetValue(key);
+    }
+
+    internal bool AllowRestrictionsFromWorld(World? world, PreventionType? preventionType = null)
+    {
+        if (_config?.GetValue(_presetConfig) == PresetType.None) return false;
+
+        if (preventionType.HasValue && !IsPreventionTypeEnabled(preventionType.Value)) return false;
+
+        return world == world?.WorldManager.FocusedWorld ||
+               (
+                   !(_config?.GetValue(_allowRestrictionsFromFocusedWorldOnly) ?? true) &&
+                   GetWorldPresetChangeType(world) != PresetChangeType.None
+               );
     }
 }

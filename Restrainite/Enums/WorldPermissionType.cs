@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
+using FrooxEngine;
 using SkyFrost.Base;
 
 namespace Restrainite.Enums;
@@ -51,8 +52,11 @@ internal static class WorldPermissionTypes
         };
     }
 
-    internal static WorldPermissionType FromResonite(SessionAccessLevel sessionAccessLevel, bool hidden)
+    internal static WorldPermissionType ToWorldPermissionType(this World world)
     {
+        var sessionAccessLevel = world.Configuration.AccessLevel.Value;
+        var hidden = world.HideFromListing;
+
         return sessionAccessLevel switch
         {
             SessionAccessLevel.Private => hidden
@@ -70,8 +74,9 @@ internal static class WorldPermissionTypes
             SessionAccessLevel.RegisteredUsers => hidden
                 ? WorldPermissionType.RegisteredUsersHidden
                 : WorldPermissionType.RegisteredUsersNonHidden,
-            SessionAccessLevel.Anyone =>
-                hidden ? WorldPermissionType.AnyoneHidden : WorldPermissionType.AnyoneNonHidden,
+            SessionAccessLevel.Anyone => hidden
+                ? WorldPermissionType.AnyoneHidden
+                : WorldPermissionType.AnyoneNonHidden,
             _ => throw new ArgumentOutOfRangeException(nameof(sessionAccessLevel), sessionAccessLevel, null)
         };
     }

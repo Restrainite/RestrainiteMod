@@ -44,7 +44,7 @@ internal static class DynamicVariableSpaceFinder
         {
             if (!DynamicVariableSpaceSync.UpdateListAndGetIfValid(__instance, out var dynamicVariableSpaceSync)
                 || dynamicVariableSpaceSync == null) return;
-            if (!PreventionTypes.NameToPreventionType.TryGetValue(name, out var preventionType)) return;
+            if (!name.TryParsePreventionType(out var preventionType)) return;
 
             ResoniteMod.Msg($"DynamicVariableSpaceAllocateManagerBoolean found {preventionType}");
 
@@ -62,13 +62,14 @@ internal static class DynamicVariableSpaceFinder
             if (__instance is BooleanValueManagerWrapper wrapper) wrapper.SetValueOverride(value);
         }
     }
-    
+
     [HarmonyPatch(typeof(DynamicVariableSpace.ValueManager<bool>), "Unregister")]
     private static class DynamicVariableSpaceValueManagerUnregisterPatch
     {
         private static void Postfix(DynamicVariableSpace.ValueManager<bool> __instance)
         {
-            if (__instance is BooleanValueManagerWrapper wrapper && __instance.ReadableValueCount == 0) wrapper.SetValueOverride(false);
+            if (__instance is BooleanValueManagerWrapper wrapper && __instance.ReadableValueCount == 0)
+                wrapper.SetValueOverride(false);
         }
     }
 

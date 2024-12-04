@@ -8,17 +8,17 @@ internal static class PreventOpeningContextMenu
 {
     static PreventOpeningContextMenu()
     {
-        DynamicVariableSpaceSync.OnGlobalStateChanged += OnChange;
+        RestrainiteMod.OnRestrictionChanged += OnChange;
     }
 
-    private static void OnChange(Slot slot, PreventionType preventionType, bool value)
+    private static void OnChange(PreventionType preventionType, bool value)
     {
         if (preventionType != PreventionType.PreventOpeningContextMenu ||
-            !value ||
-            !RestrainiteMod.Cfg.IsPreventionTypeEnabled(preventionType))
+            !value)
             return;
 
-        slot.World.LocalUser.CloseContextMenu(null!);
+        var user = Engine.Current.WorldManager.FocusedWorld.LocalUser;
+        user.Root.RunInUpdates(0, () => user.CloseContextMenu(null!));
     }
 
     [HarmonyPatch(typeof(InteractionHandler), "TryOpenContextMenu")]

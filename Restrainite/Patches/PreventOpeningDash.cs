@@ -8,17 +8,16 @@ internal static class PreventOpeningDash
 {
     static PreventOpeningDash()
     {
-        DynamicVariableSpaceSync.OnGlobalStateChanged += OnChange;
+        RestrainiteMod.OnRestrictionChanged += OnChange;
     }
 
-    private static void OnChange(Slot slot, PreventionType preventionType, bool value)
+    private static void OnChange(PreventionType preventionType, bool value)
     {
         if (preventionType != PreventionType.PreventOpeningDash ||
-            !value ||
-            !RestrainiteMod.Cfg.IsPreventionTypeEnabled(preventionType))
+            !value)
             return;
 
-        Userspace.Current.RunSynchronously(delegate
+        Userspace.Current.RunSynchronously(() =>
         {
             Userspace.UserspaceWorld.GetGloballyRegisteredComponent<UserspaceRadiantDash>().Open = false;
         });

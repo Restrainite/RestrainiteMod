@@ -16,7 +16,7 @@ internal class ShowOrHideContextMenuItems
     {
         if (RestrainiteMod.IsRestricted(PreventionType.ShowContextMenuItems))
         {
-            var hidden = !RestrainiteMod.Cfg.GetStrings(PreventionType.ShowContextMenuItems)
+            var hidden = !RestrainiteMod.GetStrings(PreventionType.ShowContextMenuItems)
                 .Contains(label.content);
             ResoniteMod.Msg(
                 $"Checking if the context menu item {label.content} is hidden by ShowContextMenuItems: {hidden}.");
@@ -25,7 +25,7 @@ internal class ShowOrHideContextMenuItems
 
         if (RestrainiteMod.IsRestricted(PreventionType.HideContextMenuItems))
         {
-            var hidden = RestrainiteMod.Cfg.GetStrings(PreventionType.HideContextMenuItems).Contains(label.content);
+            var hidden = RestrainiteMod.GetStrings(PreventionType.HideContextMenuItems).Contains(label.content);
             ResoniteMod.Msg(
                 $"Checking if the context menu item {label.content} is hidden by HideContextMenuItems: {hidden}.");
             if (hidden) return true;

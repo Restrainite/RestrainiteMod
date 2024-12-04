@@ -44,7 +44,7 @@ internal static class ShowOrHideDashScreens
 
                 if (RestrainiteMod.IsRestricted(PreventionType.ShowDashScreens) &&
                     !DashScreensExit.Equals(label) &&
-                    !RestrainiteMod.Cfg.GetStrings(PreventionType.ShowDashScreens).Contains(label))
+                    !RestrainiteMod.GetStrings(PreventionType.ShowDashScreens).Contains(label))
                 {
                     button.Slot.ActiveSelf = false;
                     continue;
@@ -52,7 +52,7 @@ internal static class ShowOrHideDashScreens
 
                 if (RestrainiteMod.IsRestricted(PreventionType.HideDashScreens) &&
                     !DashScreensExit.Equals(label) &&
-                    RestrainiteMod.Cfg.GetStrings(PreventionType.HideDashScreens).Contains(label))
+                    RestrainiteMod.GetStrings(PreventionType.HideDashScreens).Contains(label))
                 {
                     button.Slot.ActiveSelf = false;
                     continue;
@@ -69,12 +69,12 @@ internal static class ShowOrHideDashScreens
 
             if (RestrainiteMod.IsRestricted(PreventionType.ShowDashScreens) &&
                 !DashScreensExit.Equals(label) &&
-                !RestrainiteMod.Cfg.GetStrings(PreventionType.ShowDashScreens).Contains(label))
+                !RestrainiteMod.GetStrings(PreventionType.ShowDashScreens).Contains(label))
                 __instance.Dash.CurrentScreen.Target = __instance.Dash.GetScreen<ExitScreen>();
 
             if (RestrainiteMod.IsRestricted(PreventionType.HideDashScreens) &&
                 !DashScreensExit.Equals(label) &&
-                RestrainiteMod.Cfg.GetStrings(PreventionType.HideDashScreens).Contains(label))
+                RestrainiteMod.GetStrings(PreventionType.HideDashScreens).Contains(label))
                 __instance.Dash.CurrentScreen.Target = __instance.Dash.GetScreen<ExitScreen>();
         }
     }

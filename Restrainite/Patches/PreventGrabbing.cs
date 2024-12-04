@@ -10,15 +10,14 @@ internal static class PreventGrabbing
 
     static PreventGrabbing()
     {
-        DynamicVariableSpaceSync.OnGlobalStateChanged += OnChange;
+        RestrainiteMod.OnRestrictionChanged += OnChange;
     }
 
-    private static void OnChange(Slot slot, PreventionType preventionType, bool value)
+    private static void OnChange(PreventionType preventionType, bool value)
     {
         if (preventionType != PreventionType.PreventGrabbing ||
             !value ||
-            _interactionHandler == null ||
-            !RestrainiteMod.Cfg.IsPreventionTypeEnabled(preventionType))
+            _interactionHandler == null)
             return;
 
         var method = AccessTools.Method(typeof(InteractionHandler), "EndGrab", [typeof(bool)]);
