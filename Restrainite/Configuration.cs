@@ -194,6 +194,15 @@ internal class Configuration
 
     internal void OnWorldPermissionChanged(World world)
     {
+        // If not in the focused world, we only trigger recheck permissions, which will remove it from those worlds
+        // which should be restricted.
+        if (world != world.WorldManager.FocusedWorld)
+        {
+            ShouldRecheckPermissions?.Invoke();
+            return;
+        }
+        
+        // Focused world, we change the preset.
         var currentPreset = _config?.GetValue(_presetConfig);
         var changePreset = GetWorldPresetChangeType(world);
         switch (changePreset)
