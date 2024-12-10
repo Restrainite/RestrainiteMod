@@ -1,9 +1,9 @@
 using System;
+using System.Collections.Immutable;
 using System.Reflection;
 using Elements.Core;
 using FrooxEngine;
 using HarmonyLib;
-using ResoniteModLoader;
 using Restrainite.Enums;
 
 namespace Restrainite.Patches;
@@ -12,23 +12,39 @@ internal class ShowOrHideContextMenuItems
 {
     private static bool _insideRootContextMenuCreation;
 
-    private static bool ShouldDisableButton(LocaleString label)
+    private static bool ShouldDisableButton(ContextMenuItem contextMenuItem, LocaleString label)
     {
         if (RestrainiteMod.IsRestricted(PreventionType.ShowContextMenuItems))
         {
-            var hidden = !RestrainiteMod.GetStrings(PreventionType.ShowContextMenuItems)
-                .Contains(label.content);
-            ResoniteMod.Msg(
-                $"Checking if the context menu item {label.content} is hidden by ShowContextMenuItems: {hidden}.");
+            var items = RestrainiteMod.GetStrings(PreventionType.ShowContextMenuItems);
+
+            var hidden = !FindInList(contextMenuItem, items, label);
+
             if (hidden) return true;
         }
 
         if (RestrainiteMod.IsRestricted(PreventionType.HideContextMenuItems))
         {
-            var hidden = RestrainiteMod.GetStrings(PreventionType.HideContextMenuItems).Contains(label.content);
-            ResoniteMod.Msg(
-                $"Checking if the context menu item {label.content} is hidden by HideContextMenuItems: {hidden}.");
+            var items = RestrainiteMod.GetStrings(PreventionType.HideContextMenuItems);
+            var hidden = FindInList(contextMenuItem, items, label);
+
             if (hidden) return true;
+        }
+
+        return false;
+    }
+
+    private static bool FindInList(IWorldElement element, IImmutableSet<string> items, LocaleString label)
+    {
+        foreach (var item in items)
+        {
+            if (item.Equals(label.content)) return true;
+
+            // Special case for locomotion item
+            if (label.isLocaleKey) continue;
+            var localized = element.GetLocalized(item);
+            if (localized == null) continue;
+            if (label.content.StartsWith(localized)) return true;
         }
 
         return false;
@@ -68,7 +84,7 @@ internal class ShowOrHideContextMenuItems
         {
             if (!_insideRootContextMenuCreation) return;
 
-            if (ShouldDisableButton(label.content)) __result.Button.Slot.ActiveSelf = false;
+            if (ShouldDisableButton(__result, label.content)) __result.Button.Slot.ActiveSelf = false;
         }
     }
 }
