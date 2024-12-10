@@ -1,27 +1,49 @@
 using FrooxEngine;
 using HarmonyLib;
 using Restrainite.Enums;
+using static FrooxEngine.VoiceMode;
 
 namespace Restrainite.Patches;
 
 internal class EnforceWhispering
 {
-    [HarmonyPatch(typeof(User), nameof(User.VoiceMode), MethodType.Getter)]
-    private class VoiceModeGetterPatch
+    private static VoiceMode _originalVoiceMode = Whisper;
+
+    internal static void Initialize()
     {
-        private static void Postfix(ref VoiceMode __result, User __instance)
+        RestrainiteMod.OnRestrictionChanged += OnRestrictionChanged;
+    }
+
+    private static void OnRestrictionChanged(PreventionType preventionType, bool value)
+    {
+        if (preventionType != PreventionType.EnforceWhispering) return;
+
+        var user = Engine.Current.WorldManager.FocusedWorld.LocalUser;
+        if (user == null) return;
+
+        user.Root.Slot.RunInUpdates(0, () =>
         {
-            if (__instance.IsLocalUser && RestrainiteMod.IsRestricted(PreventionType.EnforceWhispering))
-                __result = VoiceMode.Whisper;
-        }
+            if (RestrainiteMod.IsRestricted(PreventionType.EnforceWhispering))
+            {
+                if (!value || user.VoiceMode is not (Normal or Shout or Broadcast)) return;
+                _originalVoiceMode = user.VoiceMode;
+                user.VoiceMode = Whisper;
+            }
+            else if (!value && user.VoiceMode is Whisper)
+            {
+                user.VoiceMode = _originalVoiceMode;
+            }
+        });
     }
 
     [HarmonyPatch(typeof(User), nameof(User.VoiceMode), MethodType.Setter)]
     private class VoiceModeSetterPatch
     {
-        private static bool Prefix(User __instance)
+        private static bool Prefix(VoiceMode value, User __instance)
         {
-            return !(__instance.IsLocalUser && RestrainiteMod.IsRestricted(PreventionType.EnforceWhispering));
+            return !(__instance.IsLocalUser &&
+                     RestrainiteMod.IsRestricted(PreventionType.EnforceWhispering) &&
+                     value is Normal or Shout or Broadcast);
         }
     }
 }

@@ -4,6 +4,7 @@ using FrooxEngine;
 using HarmonyLib;
 using ResoniteModLoader;
 using Restrainite.Enums;
+using Restrainite.Patches;
 
 namespace Restrainite;
 
@@ -13,7 +14,7 @@ public class RestrainiteMod : ResoniteMod
 
     public override string Name => "Restrainite";
     public override string Author => "SnepDrone Zenuru";
-    public override string Version => "0.3.5";
+    public override string Version => "0.3.6";
     public override string Link => "https://github.com/SnepDrone/Restrainite";
 
     /**
@@ -34,6 +35,16 @@ public class RestrainiteMod : ResoniteMod
 
         var harmony = new Harmony("drone.Restrainite");
         harmony.PatchAll();
+
+        InitializePatches();
+    }
+
+    private static void InitializePatches()
+    {
+        EnforceWhispering.Initialize();
+        PreventGrabbing.Initialize();
+        PreventOpeningContextMenu.Initialize();
+        PreventOpeningDash.Initialize();
     }
 
     internal static bool IsRestricted(PreventionType preventionType)

@@ -6,7 +6,7 @@ namespace Restrainite.Patches;
 
 internal static class PreventOpeningContextMenu
 {
-    static PreventOpeningContextMenu()
+    internal static void Initialize()
     {
         RestrainiteMod.OnRestrictionChanged += OnChange;
     }

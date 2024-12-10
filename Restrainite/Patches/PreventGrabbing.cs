@@ -8,7 +8,7 @@ internal static class PreventGrabbing
 {
     private static InteractionHandler? _interactionHandler;
 
-    static PreventGrabbing()
+    internal static void Initialize()
     {
         RestrainiteMod.OnRestrictionChanged += OnChange;
     }

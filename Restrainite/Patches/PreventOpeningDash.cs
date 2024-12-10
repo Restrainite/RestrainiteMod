@@ -6,7 +6,7 @@ namespace Restrainite.Patches;
 
 internal static class PreventOpeningDash
 {
-    static PreventOpeningDash()
+    internal static void Initialize()
     {
         RestrainiteMod.OnRestrictionChanged += OnChange;
     }
