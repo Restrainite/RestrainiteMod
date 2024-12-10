@@ -21,7 +21,15 @@ internal static class PreventGrabbing
             return;
 
         var method = AccessTools.Method(typeof(InteractionHandler), "EndGrab", [typeof(bool)]);
-        method?.Invoke(_interactionHandler, [false]);
+        var user = Engine.Current.WorldManager.FocusedWorld.LocalUser;
+        if (user == null) return;
+        var leftInteractionHandler = user.GetInteractionHandler(Chirality.Left);
+        if (leftInteractionHandler != null)
+            leftInteractionHandler.RunInUpdates(0, () => { method?.Invoke(leftInteractionHandler, [false]); });
+
+        var rightInteractionHandler = user.GetInteractionHandler(Chirality.Right);
+        if (rightInteractionHandler != null)
+            rightInteractionHandler.RunInUpdates(0, () => { method?.Invoke(rightInteractionHandler, [false]); });
     }
 
     [HarmonyPatch(typeof(InteractionHandler), "StartGrab")]
