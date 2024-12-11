@@ -11,6 +11,7 @@ internal class RestrictionStateOutput
     private const string DynamicVariableSpaceStatusName = "Restrainite Status";
     private readonly Configuration _configuration;
     private readonly WeakReference<Slot> _userSlot;
+    private bool _isBeingShown;
 
     internal RestrictionStateOutput(Configuration configuration, Slot userSlot)
     {
@@ -32,6 +33,8 @@ internal class RestrictionStateOutput
         if (!_userSlot.TryGetTarget(out var userSlot)) return;
         var show = _configuration.ShowStatusSlotOnUserRoot &&
                    _configuration.AllowRestrictionsFromWorld(userSlot.World);
+        if (!show && !_isBeingShown) return;
+        _isBeingShown = show;
 
         userSlot.RunInUpdates(0, show ? AddRestrainiteSlot : RemoveRestrainiteSlot);
     }
