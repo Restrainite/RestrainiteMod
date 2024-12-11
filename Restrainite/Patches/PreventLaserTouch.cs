@@ -1,5 +1,6 @@
 using Elements.Core;
 using FrooxEngine;
+using FrooxEngine.UIX;
 using HarmonyLib;
 using Restrainite.Enums;
 
@@ -15,7 +16,11 @@ internal class PreventLaserTouch
         private static void Postfix(ref ITouchable? __result)
         {
             if (__result?.World == Userspace.UserspaceWorld) return;
-            if (RestrainiteMod.IsRestricted(PreventionType.PreventLaserTouch)) __result = null!;
+            if (RestrainiteMod.IsRestricted(PreventionType.PreventLaserTouch))
+            {
+                if (__result is Canvas && __result.Slot?.Parent?.GetComponent<ContextMenu>() != null) return;
+                __result = null!;
+            }
         }
     }
 }
