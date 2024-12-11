@@ -45,6 +45,7 @@ public class RestrainiteMod : ResoniteMod
         PreventGrabbing.Initialize();
         PreventOpeningContextMenu.Initialize();
         PreventOpeningDash.Initialize();
+        PreventLaserTouch.Initialize();
     }
 
     internal static bool IsRestricted(PreventionType preventionType)

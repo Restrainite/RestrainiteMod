@@ -31,6 +31,10 @@ internal class ShowOrHideContextMenuItems
             if (hidden) return true;
         }
 
+        if (RestrainiteMod.IsRestricted(PreventionType.PreventLaserTouch) &&
+            "Interaction.LaserEnabled".Equals(label.content))
+            return true;
+
         return false;
     }
 

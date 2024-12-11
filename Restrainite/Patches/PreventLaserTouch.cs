@@ -1,3 +1,4 @@
+using System.Reflection;
 using Elements.Core;
 using FrooxEngine;
 using FrooxEngine.UIX;
@@ -6,21 +7,45 @@ using Restrainite.Enums;
 
 namespace Restrainite.Patches;
 
-internal class PreventLaserTouch
+internal static class PreventLaserTouch
 {
-    [HarmonyPatch(typeof(InteractionLaser), "GetTouchable",
-        [typeof(RelayTouchSource), typeof(float3), typeof(float3), typeof(float3), typeof(bool)],
-        [ArgumentType.Normal, ArgumentType.Out, ArgumentType.Out, ArgumentType.Out, ArgumentType.Out])]
-    private class InteractionLaserGetTouchablePatch
+    private static bool _leftOriginalValue = true;
+    private static bool _rightOriginalValue = true;
+    private static readonly FieldInfo LaserEnabledField = AccessTools.Field(typeof(InteractionHandler), "_laserEnabled");
+
+    internal static void Initialize()
     {
-        private static void Postfix(ref ITouchable? __result)
+        RestrainiteMod.OnRestrictionChanged += OnRestrictionChanged;
+    }
+
+    private static void OnRestrictionChanged(PreventionType preventionType, bool value)
+    {
+        if (preventionType != PreventionType.PreventLaserTouch) return;
+
+        var user = Engine.Current?.WorldManager?.FocusedWorld?.LocalUser;
+        if (user is null) return;
+
+        var leftInteractionHandler = user.GetInteractionHandler(Chirality.Left);
+        leftInteractionHandler.RunInUpdates(0, () =>
+            SetLaserActive(value, leftInteractionHandler, ref _leftOriginalValue));
+
+        var rightInteractionHandler = user.GetInteractionHandler(Chirality.Right);
+        rightInteractionHandler.RunInUpdates(0, () =>
+            SetLaserActive(value, rightInteractionHandler, ref _rightOriginalValue));
+    }
+
+    private static void SetLaserActive(bool value, InteractionHandler? interactionHandler, ref bool originalValue)
+    {
+        if (interactionHandler == null) return;
+        if (LaserEnabledField.GetValue(interactionHandler) is not Sync<bool> syncBool) return;
+        if (value)
         {
-            if (__result?.World == Userspace.UserspaceWorld) return;
-            if (RestrainiteMod.IsRestricted(PreventionType.PreventLaserTouch))
-            {
-                if (__result is Canvas && __result.Slot?.Parent?.GetComponent<ContextMenu>() != null) return;
-                __result = null!;
-            }
+            originalValue = syncBool.Value;
+            syncBool.Value = false;
+        }
+        else
+        {
+            syncBool.Value = originalValue;
         }
     }
 }
