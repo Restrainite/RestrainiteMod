@@ -30,6 +30,18 @@ internal class Configuration
 
     private readonly Dictionary<PresetType, ModConfigurationKey<bool[]>> _presetStore = new();
 
+    private readonly ModConfigurationKey<bool> _sendDynamicImpulses = new(
+        "Send dynamic impulses",
+        "Send a dynamic impulse to the user root slot every time a restriction is activated or deactivated.",
+        () => true);
+
+
+    private readonly ModConfigurationKey<bool> _showStatusSlotOnUserRoot = new(
+        "Show status slot on user root",
+        "Hiding the status slot might prevent some items from auto-generating controls.",
+        () => true);
+
+
     private ModConfiguration? _config;
 
     public Configuration()
@@ -38,6 +50,10 @@ internal class Configuration
             _presetStore.Add(presetType, new ModConfigurationKey<bool[]>(
                 $"PresetStore{presetType}", "", () => [], true));
     }
+
+    internal bool ShowStatusSlotOnUserRoot => _config?.GetValue(_showStatusSlotOnUserRoot) ?? true;
+
+    internal bool SendDynamicImpulses => _config?.GetValue(_sendDynamicImpulses) ?? true;
 
     internal event Action? ShouldRecheckPermissions;
 
@@ -68,6 +84,8 @@ internal class Configuration
         }
 
         builder.Key(_allowRestrictionsFromFocusedWorldOnly);
+        builder.Key(_showStatusSlotOnUserRoot);
+        builder.Key(_sendDynamicImpulses);
     }
 
     public void Init(ModConfiguration? config = null)
@@ -88,6 +106,7 @@ internal class Configuration
 
         _presetConfig.OnChanged += _ => ShouldRecheckPermissions?.Invoke();
         _allowRestrictionsFromFocusedWorldOnly.OnChanged += _ => ShouldRecheckPermissions?.Invoke();
+        _showStatusSlotOnUserRoot.OnChanged += _ => ShouldRecheckPermissions?.Invoke();
 
         _config?.Save(true);
     }
@@ -201,7 +220,7 @@ internal class Configuration
             ShouldRecheckPermissions?.Invoke();
             return;
         }
-        
+
         // Focused world, we change the preset.
         var currentPreset = _config?.GetValue(_presetConfig);
         var changePreset = GetWorldPresetChangeType(world);

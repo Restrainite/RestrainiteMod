@@ -30,8 +30,9 @@ internal class RestrictionStateOutput
     private void ShowOrHideRestrainiteRootSlot()
     {
         if (!_userSlot.TryGetTarget(out var userSlot)) return;
-        var show = _configuration.AllowRestrictionsFromWorld(userSlot.World);
-        ResoniteMod.Msg($"ShowOrHideRestrainiteRootSlot {show}");
+        var show = _configuration.ShowStatusSlotOnUserRoot &&
+                   _configuration.AllowRestrictionsFromWorld(userSlot.World);
+
         userSlot.RunInUpdates(0, show ? AddRestrainiteSlot : RemoveRestrainiteSlot);
     }
 

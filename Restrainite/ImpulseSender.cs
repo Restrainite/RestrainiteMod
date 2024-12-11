@@ -19,6 +19,7 @@ internal class ImpulseSender
 
     internal void SendDynamicImpulse<T>(PreventionType preventionType, T value)
     {
+        if (!_configuration.SendDynamicImpulses) return;
         if (!GetLocalUserSlot(out var slot) || slot == null) return;
         slot.RunInUpdates(0, () =>
         {
