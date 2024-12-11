@@ -12,7 +12,7 @@ internal class ShowOrHideContextMenuItems
 {
     private static bool _insideRootContextMenuCreation;
 
-    private static bool ShouldDisableButton(ContextMenuItem contextMenuItem, LocaleString label)
+    private static bool ShouldDisableButton(IWorldElement contextMenuItem, LocaleString label)
     {
         if (RestrainiteMod.IsRestricted(PreventionType.ShowContextMenuItems))
         {
@@ -92,12 +92,10 @@ internal class ShowOrHideContextMenuItems
     [HarmonyPatch(typeof(ContextMenu), "AddToggleItem")]
     private static class ContextMenuAddToggleItemPatch
     {
-        public static void Postfix(LocaleString trueLabel, LocaleString falseLabel, ContextMenuItem __result)
+        public static bool Prefix(LocaleString trueLabel, LocaleString falseLabel, ContextMenu __instance)
         {
-            if (!_insideRootContextMenuCreation) return;
-
-            if (ShouldDisableButton(__result, trueLabel) ||
-                ShouldDisableButton(__result, falseLabel)) __result.Button.Slot.ActiveSelf = false;
+            return !_insideRootContextMenuCreation ||
+                   !(ShouldDisableButton(__instance, trueLabel) || ShouldDisableButton(__instance, falseLabel));
         }
     }
 }
