@@ -84,7 +84,20 @@ internal class ShowOrHideContextMenuItems
         {
             if (!_insideRootContextMenuCreation) return;
 
-            if (ShouldDisableButton(__result, label.content)) __result.Button.Slot.ActiveSelf = false;
+            if (ShouldDisableButton(__result, label)) __result.Button.Slot.ActiveSelf = false;
+        }
+    }
+
+
+    [HarmonyPatch(typeof(ContextMenu), "AddToggleItem")]
+    private static class ContextMenuAddToggleItemPatch
+    {
+        public static void Postfix(LocaleString trueLabel, LocaleString falseLabel, ContextMenuItem __result)
+        {
+            if (!_insideRootContextMenuCreation) return;
+
+            if (ShouldDisableButton(__result, trueLabel) ||
+                ShouldDisableButton(__result, falseLabel)) __result.Button.Slot.ActiveSelf = false;
         }
     }
 }
