@@ -53,8 +53,8 @@ internal class DynamicVariableSpaceSync
         ResoniteMod.Msg($"Local State of {preventionType} changed to {value}");
 
         UpdateGlobalState(preventionType);
-     }
-    
+    }
+
     private void UpdateGlobalState(PreventionType preventionType)
     {
         var globalState = CalculateGlobalState(preventionType);
@@ -79,15 +79,12 @@ internal class DynamicVariableSpaceSync
     private void NotifyGlobalStateChange(PreventionType preventionType, bool value)
     {
         if (!GetDynamicVariableSpace(out var dynamicVariableSpace)) return;
-        RestrainiteMod.NotifyRestrictionChanged(dynamicVariableSpace, preventionType, value);
+        RestrainiteMod.NotifyRestrictionChanged(dynamicVariableSpace.World, preventionType, value);
     }
 
     private void UpdateAllGlobalStates()
     {
-        foreach (var preventionType in PreventionTypes.List)
-        {
-            UpdateGlobalState(preventionType);
-        }
+        foreach (var preventionType in PreventionTypes.List) UpdateGlobalState(preventionType);
     }
 
     internal static bool GetGlobalState(PreventionType preventionType)
@@ -139,8 +136,9 @@ internal class DynamicVariableSpaceSync
                     return true;
                 }
 
-                Spaces[index].Unregister(dynamicVariableSpace);
+                var dynamicVariableSpaceSyncDynamic = Spaces[index];
                 Spaces.RemoveAt(index);
+                dynamicVariableSpaceSyncDynamic.Unregister(dynamicVariableSpace);
             }
             else
             {
@@ -149,6 +147,7 @@ internal class DynamicVariableSpaceSync
                     dynamicVariableSpaceSync = new DynamicVariableSpaceSync(dynamicVariableSpace);
                     Spaces.Add(dynamicVariableSpaceSync);
                     dynamicVariableSpaceSync.Register(dynamicVariableSpace);
+                    dynamicVariableSpace.Destroyed += _ => { Remove(dynamicVariableSpace); };
                     return true;
                 }
             }
@@ -178,6 +177,7 @@ internal class DynamicVariableSpaceSync
             dynamicReferenceVariable.VariableName.OnValueChange -= OnUserVariableNameUpdate;
             dynamicReferenceVariable.Reference.OnTargetChange -= OnUserRefUpdate;
         }
+
         UpdateAllGlobalStates();
     }
 
@@ -262,10 +262,17 @@ internal class DynamicVariableSpaceSync
 
     public static void Remove(DynamicVariableSpace dynamicVariableSpace)
     {
+        DynamicVariableSpaceSync? dynamicVariableSpaceToRemove = null;
         lock (Spaces)
         {
             var index = Spaces.FindIndex(space => space.Equals(dynamicVariableSpace));
-            if (index != -1) Spaces.RemoveAt(index);
+            if (index != -1)
+            {
+                dynamicVariableSpaceToRemove = Spaces[index];
+                Spaces.RemoveAt(index);
+            }
         }
+
+        dynamicVariableSpaceToRemove?.UpdateAllGlobalStates();
     }
 }

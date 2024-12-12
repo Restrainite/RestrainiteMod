@@ -14,12 +14,12 @@ public class RestrainiteMod : ResoniteMod
 
     public override string Name => "Restrainite";
     public override string Author => "SnepDrone Zenuru";
-    public override string Version => "0.3.9";
+    public override string Version => "0.3.10";
     public override string Link => "https://github.com/SnepDrone/Restrainite";
 
     /**
      * OnRestrictionChanged will fire, when the restriction is activated or deactivated. It will take into account, if
-     * the restriction is disabled by the user. It will run in the update cycle of the component that triggered the
+     * the restriction is disabled by the user. It will run in the update cycle of the world that triggered the
      * change. The value is debounced, meaning it will only trigger, if it actually changes.
      */
     internal static event Action<PreventionType, bool>? OnRestrictionChanged;
@@ -61,7 +61,7 @@ public class RestrainiteMod : ResoniteMod
     /**
      * Only to be called by DynamicVariableSpaceSync.
      */
-    internal static void NotifyRestrictionChanged(Component source, PreventionType preventionType, bool value)
+    internal static void NotifyRestrictionChanged(World source, PreventionType preventionType, bool value)
     {
         source.RunInUpdates(0, () =>
         {
