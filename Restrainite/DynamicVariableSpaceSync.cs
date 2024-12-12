@@ -52,6 +52,11 @@ internal class DynamicVariableSpaceSync
         _localState[(int)preventionType] = value;
         ResoniteMod.Msg($"Local State of {preventionType} changed to {value}");
 
+        UpdateGlobalState(preventionType);
+     }
+    
+    private void UpdateGlobalState(PreventionType preventionType)
+    {
         var globalState = CalculateGlobalState(preventionType);
 
         if (GetGlobalState(preventionType) == globalState) return;
@@ -75,6 +80,14 @@ internal class DynamicVariableSpaceSync
     {
         if (!GetDynamicVariableSpace(out var dynamicVariableSpace)) return;
         RestrainiteMod.NotifyRestrictionChanged(dynamicVariableSpace, preventionType, value);
+    }
+
+    private void UpdateAllGlobalStates()
+    {
+        foreach (var preventionType in PreventionTypes.List)
+        {
+            UpdateGlobalState(preventionType);
+        }
     }
 
     internal static bool GetGlobalState(PreventionType preventionType)
@@ -152,6 +165,7 @@ internal class DynamicVariableSpaceSync
         foreach (var dynamicReferenceVariable in
                  dynamicVariableSpace.Slot.GetComponents<DynamicReferenceVariable<User>>())
             ComponentAdded(dynamicReferenceVariable);
+        UpdateAllGlobalStates();
     }
 
     private void Unregister(DynamicVariableSpace dynamicVariableSpace)
@@ -164,6 +178,7 @@ internal class DynamicVariableSpaceSync
             dynamicReferenceVariable.VariableName.OnValueChange -= OnUserVariableNameUpdate;
             dynamicReferenceVariable.Reference.OnTargetChange -= OnUserRefUpdate;
         }
+        UpdateAllGlobalStates();
     }
 
     private void ShouldRecheckPermissions()
