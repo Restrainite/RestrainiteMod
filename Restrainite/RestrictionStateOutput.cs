@@ -1,4 +1,5 @@
 using System;
+using Elements.Core;
 using FrooxEngine;
 using ResoniteModLoader;
 using Restrainite.Enums;
@@ -47,6 +48,8 @@ internal class RestrictionStateOutput
 
         ResoniteMod.Msg($"Adding Restrainite slot to {_userSlot}");
         var restrainiteSlot = userSlot.FindChildOrAdd(RestrainiteRootSlotName, false);
+        
+        CreateVersionComponent(restrainiteSlot);
 
         AddOrRemoveComponents(restrainiteSlot);
     }
@@ -90,6 +93,15 @@ internal class RestrictionStateOutput
             CreateComponents(restrainiteSlot, preventionType);
         else
             RemoveComponents(restrainiteSlot, preventionType);
+    }
+
+    private void CreateVersionComponent(Slot restrainiteSlot)
+    {
+        var versionName = $"{DynamicVariableSpaceStatusName}/Version";
+        var component = restrainiteSlot.GetComponentOrAttach<DynamicValueVariable<uint3>>(
+            search => versionName.Equals(search.VariableName.Value));
+        component.VariableName.Value = versionName;
+        component.Value.Value = _configuration.Version;
     }
 
     private static void CreateComponents(Slot restrainiteSlot, PreventionType preventionType)

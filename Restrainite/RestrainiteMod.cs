@@ -14,7 +14,7 @@ public class RestrainiteMod : ResoniteMod
 
     public override string Name => "Restrainite";
     public override string Author => "SnepDrone Zenuru";
-    public override string Version => "0.3.10";
+    public override string Version => "0.3.11";
     public override string Link => "https://github.com/SnepDrone/Restrainite";
 
     /**
@@ -31,7 +31,7 @@ public class RestrainiteMod : ResoniteMod
 
     public override void OnEngineInit()
     {
-        Configuration.Init(GetConfiguration());
+        Configuration.Init(GetConfiguration(), Version);
 
         var harmony = new Harmony("drone.Restrainite");
         harmony.PatchAll();

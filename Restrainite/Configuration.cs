@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using Elements.Core;
 using FrooxEngine;
 using ResoniteModLoader;
 using Restrainite.Enums;
@@ -43,6 +44,8 @@ internal class Configuration
 
 
     private ModConfiguration? _config;
+    
+    public uint3 Version;
 
     public Configuration()
     {
@@ -88,7 +91,7 @@ internal class Configuration
         builder.Key(_sendDynamicImpulses);
     }
 
-    public void Init(ModConfiguration? config = null)
+    public void Init(ModConfiguration? config, string version)
     {
         _config = config;
         _presetConfig.OnChanged += OnPresetSelected;
@@ -109,8 +112,19 @@ internal class Configuration
         _showStatusSlotOnUserRoot.OnChanged += _ => ShouldRecheckPermissions?.Invoke();
 
         _config?.Save(true);
+        
+        Version = ParseVersion(version);
     }
 
+    private static uint3 ParseVersion(string version)
+    {
+        var parts = version.Split('.');
+        if (parts.Length != 3) throw new FormatException("Invalid version format");
+        var major = uint.Parse(parts[0]);
+        var minor = uint.Parse(parts[1]);
+        var patch = uint.Parse(parts[2]);
+        return new uint3(major, minor, patch);
+    }
 
     private ModConfigurationKey.OnChangedHandler OnPreventionTypeConfigChanged(PreventionType preventionType)
     {
