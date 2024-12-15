@@ -24,7 +24,11 @@ internal enum PreventionType
     ShowContextMenuItems,
     HideContextMenuItems,
     ShowDashScreens,
-    HideDashScreens
+    HideDashScreens,
+    PreventUserScaling,
+    PreventCrouching,
+    PreventChangeLocomotion,
+    ResetUserScale
 }
 
 internal static class PreventionTypes
