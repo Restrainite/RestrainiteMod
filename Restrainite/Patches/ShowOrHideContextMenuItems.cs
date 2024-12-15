@@ -62,7 +62,7 @@ internal class ShowOrHideContextMenuItems
         {
             var type = typeof(InteractionHandler);
             return AccessTools.FirstMethod(type,
-                method => method.Name == "OpenContextMenu" && method.GetParameters().Length == 2);
+                method => "OpenContextMenu".Equals(method.Name) && method.GetParameters().Length == 2);
         }
 
         public static void Prefix()

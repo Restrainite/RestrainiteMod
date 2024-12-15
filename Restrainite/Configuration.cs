@@ -44,7 +44,7 @@ internal class Configuration
 
 
     private ModConfiguration? _config;
-    
+
     public uint3 Version;
 
     public Configuration()
@@ -112,7 +112,7 @@ internal class Configuration
         _showStatusSlotOnUserRoot.OnChanged += _ => ShouldRecheckPermissions?.Invoke();
 
         _config?.Save(true);
-        
+
         Version = ParseVersion(version);
     }
 
@@ -255,6 +255,7 @@ internal class Configuration
                 return;
             case PresetChangeType.DoNotChange:
             case null:
+                ShouldRecheckPermissions?.Invoke();
                 return;
             default:
                 throw new ArgumentOutOfRangeException();

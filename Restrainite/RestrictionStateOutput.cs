@@ -13,6 +13,7 @@ internal class RestrictionStateOutput
     private readonly Configuration _configuration;
     private readonly WeakReference<Slot> _userSlot;
     private bool _isBeingShown;
+    private WeakReference<Slot>? _oldSlot;
 
     internal RestrictionStateOutput(Configuration configuration, Slot userSlot)
     {
@@ -47,11 +48,22 @@ internal class RestrictionStateOutput
         CreateDynamicVariableSpace();
 
         ResoniteMod.Msg($"Adding Restrainite slot to {_userSlot}");
+        DeleteOldSlotIfMoved();
         var restrainiteSlot = userSlot.FindChildOrAdd(RestrainiteRootSlotName, false);
-        
+        _oldSlot = new WeakReference<Slot>(restrainiteSlot);
+
         CreateVersionComponent(restrainiteSlot);
 
         AddOrRemoveComponents(restrainiteSlot);
+    }
+
+    private void DeleteOldSlotIfMoved()
+    {
+        if (_oldSlot == null || 
+            !_oldSlot.TryGetTarget(out var slot) || 
+            !_userSlot.TryGetTarget(out var userSlot) ||
+            slot.Parent == userSlot) return;
+        slot.Destroy(true);
     }
 
     private void CreateDynamicVariableSpace()
@@ -59,7 +71,7 @@ internal class RestrictionStateOutput
         if (!_userSlot.TryGetTarget(out var userSlot)) return;
         ResoniteMod.Msg($"Adding Restrainite DynamicVariableSpace to {_userSlot}");
         var dynamicVariableSpace = userSlot.GetComponentOrAttach<DynamicVariableSpace>(
-            component => component.CurrentName == DynamicVariableSpaceStatusName
+            component => DynamicVariableSpaceStatusName.Equals(component.CurrentName)
         );
         dynamicVariableSpace.OnlyDirectBinding.Value = true;
         dynamicVariableSpace.SpaceName.Value = DynamicVariableSpaceStatusName;
@@ -68,17 +80,22 @@ internal class RestrictionStateOutput
 
     private void RemoveRestrainiteSlot()
     {
-        if (!_userSlot.TryGetTarget(out var userSlot)) return;
-        if (userSlot.IsDestroyed || userSlot.IsDestroying) return;
-
-        userSlot.RemoveAllComponents(component => component is DynamicVariableSpace
+        if (_userSlot.TryGetTarget(out var userSlot) &&
+            !userSlot.IsDestroyed &&
+            !userSlot.IsDestroying)
         {
-            CurrentName: DynamicVariableSpaceStatusName
-        });
+            userSlot.RemoveAllComponents(component => component is DynamicVariableSpace
+            {
+                CurrentName: DynamicVariableSpaceStatusName
+            });
 
-        var restrainiteSlot = userSlot.FindChild(RestrainiteRootSlotName);
-        if (restrainiteSlot == null) return;
-        restrainiteSlot.Destroy(true);
+            var restrainiteSlot = userSlot.FindChild(RestrainiteRootSlotName);
+            restrainiteSlot?.Destroy(true);
+        }
+
+        if (_oldSlot == null || !_oldSlot.TryGetTarget(out var slot)) return;
+        if (slot.IsDestroying || slot.IsDestroyed) return;
+        slot.Destroy(true);
     }
 
     private void AddOrRemoveComponents(Slot restrainiteSlot)
@@ -125,7 +142,7 @@ internal class RestrictionStateOutput
         string nameWithPrefix)
     {
         var component = slot.GetComponentOrAttach<DynamicValueVariable<bool>>(out var attached,
-            search => search.VariableName.Value == nameWithPrefix);
+            search => nameWithPrefix.Equals(search.VariableName.Value));
 
         component.VariableName.Value = nameWithPrefix;
         component.Value.Value = RestrainiteMod.IsRestricted(preventionType);
@@ -151,7 +168,7 @@ internal class RestrictionStateOutput
         var nameWithPrefix = $"{DynamicVariableSpaceStatusName}/{expandedName}";
         oldSlot.RemoveAllComponents(component => component is GizmoLink);
         oldSlot.RemoveAllComponents(component => component is DynamicValueVariable<bool> dynComponent &&
-                                                 dynComponent.VariableName == nameWithPrefix);
+                                                 nameWithPrefix.Equals(dynComponent.VariableName.Value));
 
         if (oldSlot.ComponentCount != 0)
         {

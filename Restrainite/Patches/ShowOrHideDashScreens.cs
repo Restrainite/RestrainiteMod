@@ -17,7 +17,7 @@ internal static class ShowOrHideDashScreens
         }
 
         var localeStringDriver = screen.Label.FindNearestParent<Slot>()
-            .GetComponent<LocaleStringDriver>(l => l.Target.Target == screen.Label);
+            .GetComponent<LocaleStringDriver>(l => screen.Label.Equals(l.Target.Target));
         label = localeStringDriver?.LocaleString.content ?? (screen.Label.Value ?? "");
         return true;
     }
