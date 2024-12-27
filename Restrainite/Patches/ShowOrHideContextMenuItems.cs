@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Immutable;
-using System.Reflection;
 using Elements.Core;
 using FrooxEngine;
 using HarmonyLib;
@@ -10,8 +9,6 @@ namespace Restrainite.Patches;
 
 internal class ShowOrHideContextMenuItems
 {
-    private static bool _insideRootContextMenuCreation;
-
     private static bool ShouldDisableButton(IWorldElement contextMenuItem, LocaleString label)
     {
         if (RestrainiteMod.IsRestricted(PreventionType.ShowContextMenuItems))
@@ -54,28 +51,6 @@ internal class ShowOrHideContextMenuItems
         return false;
     }
 
-
-    [HarmonyPatch]
-    private static class InteractionHandlerOpenContextMenuPatch
-    {
-        public static MethodBase TargetMethod()
-        {
-            var type = typeof(InteractionHandler);
-            return AccessTools.FirstMethod(type,
-                method => "OpenContextMenu".Equals(method.Name) && method.GetParameters().Length == 2);
-        }
-
-        public static void Prefix()
-        {
-            _insideRootContextMenuCreation = true;
-        }
-
-        public static void Postfix()
-        {
-            _insideRootContextMenuCreation = false;
-        }
-    }
-
     [HarmonyPatch(typeof(ContextMenu), "AddItem",
         [
             typeof(LocaleString), typeof(IAssetProvider<ITexture2D>), typeof(Uri), typeof(IAssetProvider<Sprite>),
@@ -86,20 +61,16 @@ internal class ShowOrHideContextMenuItems
     {
         public static void Postfix(LocaleString label, ContextMenuItem __result)
         {
-            if (!_insideRootContextMenuCreation) return;
-
             if (ShouldDisableButton(__result, label)) __result.Button.Slot.ActiveSelf = false;
         }
     }
-
 
     [HarmonyPatch(typeof(ContextMenu), "AddToggleItem")]
     private static class ContextMenuAddToggleItemPatch
     {
         public static bool Prefix(LocaleString trueLabel, LocaleString falseLabel, ContextMenu __instance)
         {
-            return !_insideRootContextMenuCreation ||
-                   !(ShouldDisableButton(__instance, trueLabel) || ShouldDisableButton(__instance, falseLabel));
+            return !(ShouldDisableButton(__instance, trueLabel) || ShouldDisableButton(__instance, falseLabel));
         }
     }
 }
