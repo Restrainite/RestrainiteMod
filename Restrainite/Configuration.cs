@@ -37,12 +37,6 @@ internal class Configuration
         () => true);
 
 
-    private readonly ModConfigurationKey<bool> _showStatusSlotOnUserRoot = new(
-        "Show status slot on user root",
-        "Hiding the status slot might prevent some items from auto-generating controls.",
-        () => true);
-
-
     private ModConfiguration? _config;
 
     public uint3 Version;
@@ -53,8 +47,6 @@ internal class Configuration
             _presetStore.Add(presetType, new ModConfigurationKey<bool[]>(
                 $"PresetStore{presetType}", "", () => [], true));
     }
-
-    internal bool ShowStatusSlotOnUserRoot => _config?.GetValue(_showStatusSlotOnUserRoot) ?? true;
 
     internal bool SendDynamicImpulses => _config?.GetValue(_sendDynamicImpulses) ?? true;
 
@@ -87,7 +79,6 @@ internal class Configuration
         }
 
         builder.Key(_allowRestrictionsFromFocusedWorldOnly);
-        builder.Key(_showStatusSlotOnUserRoot);
         builder.Key(_sendDynamicImpulses);
     }
 
@@ -109,7 +100,6 @@ internal class Configuration
 
         _presetConfig.OnChanged += _ => ShouldRecheckPermissions?.Invoke();
         _allowRestrictionsFromFocusedWorldOnly.OnChanged += _ => ShouldRecheckPermissions?.Invoke();
-        _showStatusSlotOnUserRoot.OnChanged += _ => ShouldRecheckPermissions?.Invoke();
 
         _config?.Save(true);
 

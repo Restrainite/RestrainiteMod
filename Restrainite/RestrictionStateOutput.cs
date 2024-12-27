@@ -33,8 +33,7 @@ internal class RestrictionStateOutput
     private void ShowOrHideRestrainiteRootSlot()
     {
         if (!_userSlot.TryGetTarget(out var userSlot)) return;
-        var show = _configuration.ShowStatusSlotOnUserRoot &&
-                   _configuration.AllowRestrictionsFromWorld(userSlot.World);
+        var show = _configuration.AllowRestrictionsFromWorld(userSlot.World);
         if (!show && !_isBeingShown) return;
         _isBeingShown = show;
 
@@ -59,8 +58,8 @@ internal class RestrictionStateOutput
 
     private void DeleteOldSlotIfMoved()
     {
-        if (_oldSlot == null || 
-            !_oldSlot.TryGetTarget(out var slot) || 
+        if (_oldSlot == null ||
+            !_oldSlot.TryGetTarget(out var slot) ||
             !_userSlot.TryGetTarget(out var userSlot) ||
             slot.Parent == userSlot) return;
         slot.Destroy(true);
