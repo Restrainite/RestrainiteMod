@@ -56,3 +56,5 @@ If this is the first time you are compiling the mod, start from step 1. Otherwhi
 - Unless you just started at step 1 and cloned the mod source fresh, pull the latest updates by running the command `git pull`
 - Finally, run `dotnet build -c Release` to compile the mod. If all went well, it should complete within 10 seconds without any errors.
 - If it succeeded, great! The mod dll was automatically copied to your `rml_mods` folder.
+
+</details>
