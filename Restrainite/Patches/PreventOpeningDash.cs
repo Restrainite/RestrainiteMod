@@ -31,21 +31,17 @@ internal static class PreventOpeningDash
         if (RestrainiteMod.IsRestricted(PreventionType.PreventOpeningDash)) value = false;
     }
 
+    [HarmonyPrefix]
     [HarmonyPatch(typeof(UserspaceRadiantDash), nameof(UserspaceRadiantDash.OpenContact))]
-    private class UserspaceRadiantDashOpenContactPatch
+    private static bool PreventOpeningDash_UserspaceRadiantDashOpenContact_Prefix()
     {
-        private static bool Prefix()
-        {
-            return !RestrainiteMod.IsRestricted(PreventionType.PreventOpeningDash);
-        }
+        return !RestrainiteMod.IsRestricted(PreventionType.PreventOpeningDash);
     }
-    
+
+    [HarmonyPrefix]
     [HarmonyPatch(typeof(UserspaceRadiantDash), nameof(UserspaceRadiantDash.ToggleSessionControl))]
-    private class UserspaceRadiantDashToggleSessionControlPatch
+    private static bool PreventOpeningDash_UserspaceRadiantDashToggleSessionControl_Prefix()
     {
-        private static bool Prefix()
-        {
-            return !RestrainiteMod.IsRestricted(PreventionType.PreventOpeningDash);
-        }
+        return !RestrainiteMod.IsRestricted(PreventionType.PreventOpeningDash);
     }
 }
