@@ -5,6 +5,7 @@ using Restrainite.Enums;
 
 namespace Restrainite.Patches;
 
+[HarmonyPatch]
 internal static class PreventUserScaling
 {
     internal static void Initialize()
@@ -21,14 +22,12 @@ internal static class PreventUserScaling
         activeUserRoot.RunInUpdates(0, () => activeUserRoot.SetUserScale(activeUserRoot.GetDefaultScale(), 0.25f));
     }
 
+    [HarmonyPrefix]
     [HarmonyPatch(typeof(LocomotionController), nameof(LocomotionController.CanScale), MethodType.Getter)]
-    private static class LocomotionControllerCanScalePatch
+    private static bool PreventUserScaling_LocomotionControllerCanScale_Getter_Prefix(ref bool __result)
     {
-        private static bool Prefix(ref bool __result)
-        {
-            if (!RestrainiteMod.IsRestricted(PreventionType.PreventUserScaling)) return true;
-            __result = false;
-            return false;
-        }
+        if (!RestrainiteMod.IsRestricted(PreventionType.PreventUserScaling)) return true;
+        __result = false;
+        return false;
     }
 }

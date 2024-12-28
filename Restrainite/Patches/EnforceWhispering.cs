@@ -5,6 +5,7 @@ using static FrooxEngine.VoiceMode;
 
 namespace Restrainite.Patches;
 
+[HarmonyPatch]
 internal class EnforceWhispering
 {
     private static VoiceMode _originalVoiceMode = Whisper;
@@ -36,14 +37,12 @@ internal class EnforceWhispering
         });
     }
 
+    [HarmonyPrefix]
     [HarmonyPatch(typeof(User), nameof(User.VoiceMode), MethodType.Setter)]
-    private class VoiceModeSetterPatch
+    private static bool EnforceWhispering_UserVoiceMode_Setter_Prefix(VoiceMode value, User __instance)
     {
-        private static bool Prefix(VoiceMode value, User __instance)
-        {
-            return !(__instance.IsLocalUser &&
-                     RestrainiteMod.IsRestricted(PreventionType.EnforceWhispering) &&
-                     value is Normal or Shout or Broadcast);
-        }
+        return !(__instance.IsLocalUser &&
+                 RestrainiteMod.IsRestricted(PreventionType.EnforceWhispering) &&
+                 value is Normal or Shout or Broadcast);
     }
 }
