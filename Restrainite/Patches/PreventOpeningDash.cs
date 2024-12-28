@@ -7,19 +7,18 @@ namespace Restrainite.Patches;
 [HarmonyPatch]
 internal static class PreventOpeningDash
 {
-    static PreventOpeningDash()
+    internal static void Initialize()
     {
-        DynamicVariableSpaceSync.OnGlobalStateChanged += OnChange;
+        RestrainiteMod.OnRestrictionChanged += OnChange;
     }
 
-    private static void OnChange(Slot slot, PreventionType preventionType, bool value)
+    private static void OnChange(PreventionType preventionType, bool value)
     {
         if (preventionType != PreventionType.PreventOpeningDash ||
-            !value ||
-            !RestrainiteMod.Cfg.IsPreventionTypeEnabled(preventionType))
+            !value)
             return;
 
-        Userspace.Current.RunSynchronously(delegate
+        Userspace.Current.RunSynchronously(() =>
         {
             Userspace.UserspaceWorld.GetGloballyRegisteredComponent<UserspaceRadiantDash>().Open = false;
         });
@@ -30,5 +29,23 @@ internal static class PreventOpeningDash
     private static void PreventOpeningDash_UserspaceRadiantDashOpen_Setter_Prefix(ref bool value)
     {
         if (RestrainiteMod.IsRestricted(PreventionType.PreventOpeningDash)) value = false;
+    }
+
+    [HarmonyPatch(typeof(UserspaceRadiantDash), nameof(UserspaceRadiantDash.OpenContact))]
+    private class UserspaceRadiantDashOpenContactPatch
+    {
+        private static bool Prefix()
+        {
+            return !RestrainiteMod.IsRestricted(PreventionType.PreventOpeningDash);
+        }
+    }
+    
+    [HarmonyPatch(typeof(UserspaceRadiantDash), nameof(UserspaceRadiantDash.ToggleSessionControl))]
+    private class UserspaceRadiantDashToggleSessionControlPatch
+    {
+        private static bool Prefix()
+        {
+            return !RestrainiteMod.IsRestricted(PreventionType.PreventOpeningDash);
+        }
     }
 }

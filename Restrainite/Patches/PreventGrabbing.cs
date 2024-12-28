@@ -9,21 +9,28 @@ internal static class PreventGrabbing
 {
     private static InteractionHandler? _interactionHandler;
 
-    static PreventGrabbing()
+    internal static void Initialize()
     {
-        DynamicVariableSpaceSync.OnGlobalStateChanged += OnChange;
+        RestrainiteMod.OnRestrictionChanged += OnChange;
     }
 
-    private static void OnChange(Slot slot, PreventionType preventionType, bool value)
+    private static void OnChange(PreventionType preventionType, bool value)
     {
         if (preventionType != PreventionType.PreventGrabbing ||
             !value ||
-            _interactionHandler == null ||
-            !RestrainiteMod.Cfg.IsPreventionTypeEnabled(preventionType))
+            _interactionHandler == null)
             return;
 
         var method = AccessTools.Method(typeof(InteractionHandler), "EndGrab", [typeof(bool)]);
-        method?.Invoke(_interactionHandler, [false]);
+        var user = Engine.Current.WorldManager.FocusedWorld.LocalUser;
+        if (user == null) return;
+        var leftInteractionHandler = user.GetInteractionHandler(Chirality.Left);
+        if (leftInteractionHandler != null)
+            leftInteractionHandler.RunInUpdates(0, () => { method?.Invoke(leftInteractionHandler, [false]); });
+
+        var rightInteractionHandler = user.GetInteractionHandler(Chirality.Right);
+        if (rightInteractionHandler != null)
+            rightInteractionHandler.RunInUpdates(0, () => { method?.Invoke(rightInteractionHandler, [false]); });
     }
 
     [HarmonyPrefix]

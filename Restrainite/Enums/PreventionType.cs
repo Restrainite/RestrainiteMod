@@ -24,7 +24,11 @@ internal enum PreventionType
     ShowContextMenuItems,
     HideContextMenuItems,
     ShowDashScreens,
-    HideDashScreens
+    HideDashScreens,
+    PreventUserScaling,
+    PreventCrouching,
+    PreventChangeLocomotion,
+    ResetUserScale
 }
 
 internal static class PreventionTypes
@@ -38,11 +42,16 @@ internal static class PreventionTypes
         List.ToDictionary(l => l,
             l => Regex.Replace(l.ToString(), "([a-z])([A-Z])", "$1 $2"));
 
-    internal static readonly Dictionary<string, PreventionType> NameToPreventionType =
+    private static readonly Dictionary<string, PreventionType> NameToPreventionType =
         List.ToDictionary(l => Dictionary[l], l => l);
 
     internal static string ToExpandedString(this PreventionType type)
     {
         return Dictionary[type];
+    }
+
+    internal static bool TryParsePreventionType(this string preventionTypeString, out PreventionType preventionType)
+    {
+        return NameToPreventionType.TryGetValue(preventionTypeString, out preventionType);
     }
 }
