@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using Elements.Core;
 using FrooxEngine;
 using ResoniteModLoader;
@@ -29,7 +30,7 @@ internal class Configuration
         "Select a preset that should be loaded on game startup. DoNotChange will not change the preset on startup.",
         () => PresetChangeType.None);
 
-    private readonly Dictionary<PresetType, ModConfigurationKey<bool[]>> _presetStore = new();
+    private readonly Dictionary<PresetType, ModConfigurationKey<Dictionary<string,bool>>> _presetStore = new();
 
     private readonly ModConfigurationKey<bool> _sendDynamicImpulses = new(
         "Send dynamic impulses",
@@ -44,8 +45,8 @@ internal class Configuration
     public Configuration()
     {
         foreach (var presetType in PresetTypes.List)
-            _presetStore.Add(presetType, new ModConfigurationKey<bool[]>(
-                $"PresetStore{presetType}", "", () => [], true));
+            _presetStore.Add(presetType, new ModConfigurationKey<Dictionary<string,bool>>(
+                $"Preset{presetType}", "", () => new Dictionary<string, bool>(), true));
     }
 
     internal bool SendDynamicImpulses => _config?.GetValue(_sendDynamicImpulses) ?? true;
@@ -62,7 +63,7 @@ internal class Configuration
 
         foreach (var preventionType in PreventionTypes.List)
         {
-            var key = new ModConfigurationKey<bool>($"Allow {preventionType} Restriction",
+            var key = new ModConfigurationKey<bool>($"Allow {preventionType.ToExpandedString()} Restriction",
                 "Should others be able to control this ability.", () => false);
             builder.Key(key);
             _displayedPreventionTypes.Add(preventionType, key);
@@ -171,18 +172,20 @@ internal class Configuration
         if (presetType == PresetType.All) return new BitArray(PreventionTypes.Max, true);
         var savedPresetFound = _config.TryGetValue(_presetStore[presetType], out var value);
         if (!savedPresetFound || value == null) return new BitArray(PreventionTypes.Max, false);
-        var bitArray = new BitArray(value)
-        {
-            Length = PreventionTypes.Max
-        };
+        var bitArray = new BitArray(PreventionTypes.Max, false);
+        foreach (var entry in value) {
+            if (entry.Key == null) continue;
+            var found = entry.Key.TryParsePreventionType(out var preventionType);
+            if (!found) continue;
+            bitArray.Set((int)preventionType, entry.Value);
+        }
         return bitArray;
     }
 
     private void SetCustomStored(PresetType presetType, BitArray bitArray)
     {
-        var array = new bool[bitArray.Count];
-        bitArray.CopyTo(array, 0);
-        _config?.Set(_presetStore[presetType], array);
+        var dictionary = PreventionTypes.List.ToDictionary(preventionType => preventionType.ToExpandedString(), preventionType => bitArray[(int)preventionType]);
+        _config?.Set(_presetStore[presetType], dictionary);
     }
 
     private void OnPresetSelected(object? value)
