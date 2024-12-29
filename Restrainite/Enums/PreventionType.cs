@@ -27,10 +27,8 @@ internal enum PreventionType
     HideDashScreens,
     PreventUserScaling,
     PreventCrouching,
-    PreventJumping,
     PreventChangeLocomotion,
-    ResetUserScale,
-    PreventLeavingAnchors
+    ResetUserScale
 }
 
 internal static class PreventionTypes
