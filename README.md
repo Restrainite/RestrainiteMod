@@ -28,11 +28,10 @@ _(As of version 0.3.14)_
 - `PreventRespawning`: Prevents respawning, including emergency respawn gesture.
 - `PreventEmergencyRespawning`: Prevents using the emergency respawn gesture (can still respawn via session users tab).
 - `PreventSwitchingWorld`: Prevents starting a new world, joining another session, leaving the current world, or changing focus.
-- `ShowContextMenuItems`: **[+ string]** When enabled, any **root** context menu items not in this list will be hidden.
-- `HideContextMenuItems`: **[+ string]** When enabled, any **root** context menu items in this list will be hidden.
+- `ShowContextMenuItems`: **[+ string]** When enabled, any context menu items not in this list will be hidden.
+- `HideContextMenuItems`: **[+ string]** When enabled, any context menu items in this list will be hidden.
   - _ShowContextMenuItems_ is evaluated before _HideContextMenuItems_ if both are enabled.
   - For default context menu items, you need to list their locale string names. See the "interact with the mod" section below.
-  - These options only show/hide root context menu items.
 - `ShowDashScreens`: **[+ string]** When enabled, any dashboard screens not in this list will be hidden.
 - `HideDashScreens`: **[+ string]** When enabled, any dashboard screens in this list will be hidden.
   - The exit screen can not be hidden.
@@ -55,8 +54,6 @@ _(As of version 0.3.14)_
 3. If you use ResoniteModLoader, install [ResoniteModSettings](https://github.com/badhaloninja/ResoniteModSettings)
 4. Start Resonite.
 5. Check the settings menu to customize your options.
-6. Once enabled, the options will show up as `DynamicValueVariable` components under the `Restrainite` slot in your user 
-   root slot.
 
 ## How to interact with the mod
 
