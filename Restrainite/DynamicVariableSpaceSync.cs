@@ -215,8 +215,11 @@ internal class DynamicVariableSpaceSync
         if (syncField.Component is not DynamicReferenceVariable<User> dynamicReferenceVariable) return;
 
         // Force refresh value in DynamicVariableSpace Manager 
-        dynamicReferenceVariable.UpdateLinking();
-        CheckLocalState();
+        dynamicReferenceVariable.RunInUpdates(0, () =>
+        {
+            dynamicReferenceVariable.UpdateLinking();
+            CheckLocalState();
+        });
     }
 
     private void CheckLocalState()
