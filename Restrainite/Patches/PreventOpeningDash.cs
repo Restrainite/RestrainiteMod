@@ -4,6 +4,7 @@ using Restrainite.Enums;
 
 namespace Restrainite.Patches;
 
+[HarmonyPatch]
 internal static class PreventOpeningDash
 {
     internal static void Initialize()
@@ -23,30 +24,24 @@ internal static class PreventOpeningDash
         });
     }
 
+    [HarmonyPrefix]
     [HarmonyPatch(typeof(UserspaceRadiantDash), nameof(UserspaceRadiantDash.Open), MethodType.Setter)]
-    private class UserspaceRadiantDashBlockOpenClosePatch
+    private static void PreventOpeningDash_UserspaceRadiantDashOpen_Setter_Prefix(ref bool value)
     {
-        private static void Prefix(ref bool value)
-        {
-            if (RestrainiteMod.IsRestricted(PreventionType.PreventOpeningDash)) value = false;
-        }
+        if (RestrainiteMod.IsRestricted(PreventionType.PreventOpeningDash)) value = false;
     }
 
+    [HarmonyPrefix]
     [HarmonyPatch(typeof(UserspaceRadiantDash), nameof(UserspaceRadiantDash.OpenContact))]
-    private class UserspaceRadiantDashOpenContactPatch
+    private static bool PreventOpeningDash_UserspaceRadiantDashOpenContact_Prefix()
     {
-        private static bool Prefix()
-        {
-            return !RestrainiteMod.IsRestricted(PreventionType.PreventOpeningDash);
-        }
+        return !RestrainiteMod.IsRestricted(PreventionType.PreventOpeningDash);
     }
-    
+
+    [HarmonyPrefix]
     [HarmonyPatch(typeof(UserspaceRadiantDash), nameof(UserspaceRadiantDash.ToggleSessionControl))]
-    private class UserspaceRadiantDashToggleSessionControlPatch
+    private static bool PreventOpeningDash_UserspaceRadiantDashToggleSessionControl_Prefix()
     {
-        private static bool Prefix()
-        {
-            return !RestrainiteMod.IsRestricted(PreventionType.PreventOpeningDash);
-        }
+        return !RestrainiteMod.IsRestricted(PreventionType.PreventOpeningDash);
     }
 }

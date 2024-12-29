@@ -7,6 +7,7 @@ using Restrainite.Enums;
 
 namespace Restrainite.Patches;
 
+[HarmonyPatch]
 internal class ShowOrHideContextMenuItems
 {
     private static bool ShouldDisableButton(IWorldElement contextMenuItem, LocaleString label)
@@ -51,26 +52,22 @@ internal class ShowOrHideContextMenuItems
         return false;
     }
 
+    [HarmonyPostfix]
     [HarmonyPatch(typeof(ContextMenu), "AddItem",
         [
             typeof(LocaleString), typeof(IAssetProvider<ITexture2D>), typeof(Uri), typeof(IAssetProvider<Sprite>),
             typeof(colorX?)
         ],
         [ArgumentType.Ref, ArgumentType.Normal, ArgumentType.Normal, ArgumentType.Normal, ArgumentType.Ref])]
-    private static class ContextMenuAddItemPatch
+    public static void ShowOrHideContextMenuItems_ContextMenuAddItem_Postfix(LocaleString label, ContextMenuItem __result)
     {
-        public static void Postfix(LocaleString label, ContextMenuItem __result)
-        {
-            if (ShouldDisableButton(__result, label)) __result.Button.Slot.ActiveSelf = false;
-        }
+        if (ShouldDisableButton(__result, label)) __result.Button.Slot.ActiveSelf = false;
     }
 
+    [HarmonyPrefix]
     [HarmonyPatch(typeof(ContextMenu), "AddToggleItem")]
-    private static class ContextMenuAddToggleItemPatch
+    public static bool ShowOrHideContextMenuItems_ContextMenuAddToggleItem_Prefix(LocaleString trueLabel, LocaleString falseLabel, ContextMenu __instance)
     {
-        public static bool Prefix(LocaleString trueLabel, LocaleString falseLabel, ContextMenu __instance)
-        {
-            return !(ShouldDisableButton(__instance, trueLabel) || ShouldDisableButton(__instance, falseLabel));
-        }
+        return !(ShouldDisableButton(__instance, trueLabel) || ShouldDisableButton(__instance, falseLabel));
     }
 }

@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+using System.Reflection;
 using FrooxEngine;
 using HarmonyLib;
 using Restrainite.Enums;
@@ -6,36 +8,30 @@ namespace Restrainite.Patches;
 
 internal class PreventSwitchingWorld
 {
-    [HarmonyPatch(typeof(WorldOrb), "OpenAsync", MethodType.Async)]
-    private class WorldOrbOpenPatch
+    [HarmonyPatch()]
+    private class PreventSwitchingWorld_Patches
     {
+        private static IEnumerable<MethodBase> TargetMethods()
+        {
+            yield return AccessTools.Method(typeof(Userspace), nameof(Userspace.EndSession));
+            yield return AccessTools.Method(typeof(Userspace), nameof(Userspace.LeaveSession));
+        }
+
         private static bool Prefix()
         {
             return !RestrainiteMod.IsRestricted(PreventionType.PreventSwitchingWorld);
         }
     }
 
-    [HarmonyPatch(typeof(Userspace), nameof(Userspace.OpenWorld), MethodType.Async)]
-    private class UserspaceOpenWorldPatch
+    [HarmonyPatch(MethodType.Async)]
+    private class PreventSwitchingWorld_AsyncPatches
     {
-        private static bool Prefix()
+        private static IEnumerable<MethodBase> TargetMethods()
         {
-            return !RestrainiteMod.IsRestricted(PreventionType.PreventSwitchingWorld);
+            yield return AccessTools.Method(typeof(WorldOrb), "OpenAsync");
+            yield return AccessTools.Method(typeof(Userspace), nameof(Userspace.OpenWorld));
         }
-    }
 
-    [HarmonyPatch(typeof(Userspace), nameof(Userspace.EndSession))]
-    private class UserspaceEndSessionPatch
-    {
-        private static bool Prefix()
-        {
-            return !RestrainiteMod.IsRestricted(PreventionType.PreventSwitchingWorld);
-        }
-    }
-
-    [HarmonyPatch(typeof(Userspace), nameof(Userspace.LeaveSession))]
-    private class UserspaceLeaveSessionPatch
-    {
         private static bool Prefix()
         {
             return !RestrainiteMod.IsRestricted(PreventionType.PreventSwitchingWorld);
