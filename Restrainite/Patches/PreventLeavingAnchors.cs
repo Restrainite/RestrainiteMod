@@ -13,6 +13,6 @@ internal static class PreventLeavingAnchors
 	private static bool PreventLeavingAnchors_AvatarAnchorRelease_Prefix(AvatarAnchor __instance)
 	{
 		return __instance.Engine.WorldManager.FocusedWorld.LocalUser != __instance.AnchoredUser
-			|| RestrainiteMod.IsRestricted(PreventionType.PreventLeavingAnchors);
+			|| !RestrainiteMod.IsRestricted(PreventionType.PreventLeavingAnchors);
 	}
 }
