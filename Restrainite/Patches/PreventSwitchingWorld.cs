@@ -8,7 +8,7 @@ namespace Restrainite.Patches;
 
 internal class PreventSwitchingWorld
 {
-    [HarmonyPatch()]
+    [HarmonyPatch]
     private class PreventSwitchingWorld_Patches
     {
         private static IEnumerable<MethodBase> TargetMethods()
@@ -23,7 +23,7 @@ internal class PreventSwitchingWorld
         }
     }
 
-    [HarmonyPatch(MethodType.Async)]
+    [HarmonyPatch]
     private class PreventSwitchingWorld_AsyncPatches
     {
         private static IEnumerable<MethodBase> TargetMethods()
