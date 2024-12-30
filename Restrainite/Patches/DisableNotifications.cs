@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Reflection;
 using Elements.Core;
 using FrooxEngine;
 using HarmonyLib;
@@ -9,12 +11,13 @@ namespace Restrainite.Patches;
 [HarmonyPatch]
 internal static class DisableNotifications
 {
+	private static IEnumerable<MethodBase> TargetMethods()
+	{
+		return AccessTools.GetDeclaredMethods(typeof(NotificationPanel)).FindAll(info => "AddNotification".Equals(info.Name));
+	}
+	
 	[HarmonyPrefix]
-	[HarmonyPatch(typeof(NotificationPanel), "AddNotification", [
-		typeof(string), typeof(string), typeof(Uri), typeof(colorX), typeof(NotificationType), typeof(string),
-		typeof(Uri), typeof(IAssetProvider<AudioClip>)
-	])]
-	private static bool DisableNotifications_NotificationPanelAddNotification_Prefix(NotificationPanel __instance)
+	private static bool DisableNotifications_NotificationPanelAddNotification_Prefix()
 	{
 		return !RestrainiteMod.IsRestricted(PreventionType.DisableNotifications);
 	}
