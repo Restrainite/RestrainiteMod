@@ -39,10 +39,12 @@ _(As of version 0.3.14)_
   - For non-custom screens, you need to list their locale string names. See the "interact with the mod" section below.
 - `PreventUserScaling`: Prevents the user from rescaling themselves.
 - `PreventCrouching`: Prevents crouching in desktop mode.
+- `PreventJumping`: Prevents jumping, but does not prevent exiting anchors.
 - `PreventChangeLocomotion`: Prevents the user from changing their locomotion mode.
 - `ResetUserScale`: Utility variable that resets a user to their default scale.
   - You should use this by enabling then disabling in the next frame. Think of it like an impulse.
   - Keeping it enabled does not prevent the user from rescaling themselves, and will only prevent other items from using this.
+- `PreventLeavingAnchors`: Prevents the user from leaving any anchor themselves.
 
 ## Installation
 
