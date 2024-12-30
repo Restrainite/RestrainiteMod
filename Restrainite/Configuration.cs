@@ -2,7 +2,6 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using Elements.Core;
 using FrooxEngine;
 using ResoniteModLoader;
 using Restrainite.Enums;
@@ -30,7 +29,7 @@ internal class Configuration
         "Select a preset that should be loaded on game startup. DoNotChange will not change the preset on startup.",
         () => PresetChangeType.None);
 
-    private readonly Dictionary<PresetType, ModConfigurationKey<Dictionary<string,bool>>> _presetStore = new();
+    private readonly Dictionary<PresetType, ModConfigurationKey<Dictionary<string, bool>>> _presetStore = new();
 
     private readonly ModConfigurationKey<bool> _sendDynamicImpulses = new(
         "Send dynamic impulses",
@@ -40,12 +39,10 @@ internal class Configuration
 
     private ModConfiguration? _config;
 
-    public uint3 Version;
-
     public Configuration()
     {
         foreach (var presetType in PresetTypes.List)
-            _presetStore.Add(presetType, new ModConfigurationKey<Dictionary<string,bool>>(
+            _presetStore.Add(presetType, new ModConfigurationKey<Dictionary<string, bool>>(
                 $"Preset{presetType}", "", () => new Dictionary<string, bool>(), true));
     }
 
@@ -83,7 +80,7 @@ internal class Configuration
         builder.Key(_sendDynamicImpulses);
     }
 
-    public void Init(ModConfiguration? config, string version)
+    public void Init(ModConfiguration? config)
     {
         _config = config;
         _presetConfig.OnChanged += OnPresetSelected;
@@ -103,18 +100,6 @@ internal class Configuration
         _allowRestrictionsFromFocusedWorldOnly.OnChanged += _ => ShouldRecheckPermissions?.Invoke();
 
         _config?.Save(true);
-
-        Version = ParseVersion(version);
-    }
-
-    private static uint3 ParseVersion(string version)
-    {
-        var parts = version.Split('.');
-        if (parts.Length != 3) throw new FormatException("Invalid version format");
-        var major = uint.Parse(parts[0]);
-        var minor = uint.Parse(parts[1]);
-        var patch = uint.Parse(parts[2]);
-        return new uint3(major, minor, patch);
     }
 
     private ModConfigurationKey.OnChangedHandler OnPreventionTypeConfigChanged(PreventionType preventionType)
@@ -173,18 +158,21 @@ internal class Configuration
         var savedPresetFound = _config.TryGetValue(_presetStore[presetType], out var value);
         if (!savedPresetFound || value == null) return new BitArray(PreventionTypes.Max, false);
         var bitArray = new BitArray(PreventionTypes.Max, false);
-        foreach (var entry in value) {
+        foreach (var entry in value)
+        {
             if (entry.Key == null) continue;
             var found = entry.Key.TryParsePreventionType(out var preventionType);
             if (!found) continue;
             bitArray.Set((int)preventionType, entry.Value);
         }
+
         return bitArray;
     }
 
     private void SetCustomStored(PresetType presetType, BitArray bitArray)
     {
-        var dictionary = PreventionTypes.List.ToDictionary(preventionType => preventionType.ToExpandedString(), preventionType => bitArray[(int)preventionType]);
+        var dictionary = PreventionTypes.List.ToDictionary(preventionType => preventionType.ToExpandedString(),
+            preventionType => bitArray[(int)preventionType]);
         _config?.Set(_presetStore[presetType], dictionary);
     }
 

@@ -117,7 +117,12 @@ internal class RestrictionStateOutput
         var component = restrainiteSlot.GetComponentOrAttach<DynamicValueVariable<uint3>>(
             search => versionName.Equals(search.VariableName.Value));
         component.VariableName.Value = versionName;
-        component.Value.Value = _configuration.Version;
+        var version = RestrainiteMod.AssemblyVersion;
+        var versionArray = new uint3(
+            version.Major < 0 ? 0 : (uint)version.Major,
+            version.Minor < 0 ? 0 : (uint)version.Minor,
+            version.Build < 0 ? 0 : (uint)version.Build);
+        component.Value.Value = versionArray;
     }
 
     private static void CreateComponents(Slot restrainiteSlot, PreventionType preventionType)
