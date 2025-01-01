@@ -10,41 +10,54 @@ There is currently no known way to restrict this based on user ids or similar, b
 
 ## Features/Restrictions
 
-_(As of version 0.3.14)_
-- `PreventEquippingAvatar`: Prevents equipping in-world avatars or switching from inventory.
-- `PreventOpeningContextMenu`: Prevents opening the context menu, and closes it if already opened.
-- `PreventUsingTools`: Prevents equipping tools, and drops them if already equipped.
-- `PreventOpeningDash`: Prevents opening the dashboard, and closes it if already opened.
-- `PreventGrabbing`: Prevents grabbing objects physically/via laser, and drops any that are already grabbed.
-- `PreventHearing`: Forces all other users voices to be muted.
-- `EnforceSelectiveHearing` **[+ string]**: When enabled, All users will be muted except those whose **user-ID's** (not usernames) are in this list.
+_(As of version 0.4.2)_
+
+### Interaction
+- `Prevent Equipping Avatar`: Prevents equipping in-world avatars or switching from inventory.
+- `Prevent Using Tools`: Prevents equipping tools, and drops them if already equipped.
+- `Prevent Grabbing`: Prevents grabbing objects physically/via laser, and drops any that are already grabbed.
+- `Prevent Laser Touch`: Prevents any laser-based interaction.
+- `Prevent Physical Touch`: Prevents any physically-based interaction.
+    - _PreventLaserTouch_ & _PreventPhysicalTouch_ also prevent grabbing respectively.
+
+### Respawning and changing worlds
+- `Prevent Respawning`: Prevents respawning, including emergency respawn gesture.
+- `Prevent Emergency Respawning`: Prevents using the emergency respawn gesture (can still respawn via session users tab).
+- `Prevent Switching World`: Prevents starting a new world, joining another session, leaving the current world, or changing focus.
+
+### Audio
+- `Prevent Hearing`: Forces all other users voices to be muted.
+- `Enforce Selective Hearing` **[+ string]**: When enabled, All users will be muted except those whose **user-ID's** (not usernames) are in this list.
   - _PreventHearing_ takes precedence over _EnforceSelectiveHearing_.
-- `PreventLaserTouch`: Prevents any laser-based interaction.
-- `PreventPhysicalTouch`: Prevents any physically-based interaction.
-  - _PreventLaserTouch_ & _PreventPhysicalTouch_ also prevent grabbing respectively.
-- `PreventSpeaking`: Forces the user to be muted.
-- `EnforceWhispering`: Forces the user to only be able to talk in whisper mode (they can still mute themselves).
+- `Prevent Speaking`: Forces the user to be muted.
+- `Enforce Whispering`: Forces the user to only be able to talk in whisper mode (they can still mute themselves).
   - _PreventSpeaking_ takes precedence over _EnforceWhispering_.
-- `PreventRespawning`: Prevents respawning, including emergency respawn gesture.
-- `PreventEmergencyRespawning`: Prevents using the emergency respawn gesture (can still respawn via session users tab).
-- `PreventSwitchingWorld`: Prevents starting a new world, joining another session, leaving the current world, or changing focus.
-- `ShowContextMenuItems`: **[+ string]** When enabled, any context menu items not in this list will be hidden.
-- `HideContextMenuItems`: **[+ string]** When enabled, any context menu items in this list will be hidden.
+
+### UI
+- `Prevent Opening Context Menu`: Prevents opening the context menu, and closes it if already opened.
+- `Show Context Menu Items`: **[+ string]** When enabled, any context menu items not in this list will be hidden.
+- `Hide Context Menu Items`: **[+ string]** When enabled, any context menu items in this list will be hidden.
   - _ShowContextMenuItems_ is evaluated before _HideContextMenuItems_ if both are enabled.
   - For default context menu items, you need to list their locale string names. See the "interact with the mod" section below.
-- `ShowDashScreens`: **[+ string]** When enabled, any dashboard screens not in this list will be hidden.
-- `HideDashScreens`: **[+ string]** When enabled, any dashboard screens in this list will be hidden.
+- `Prevent Opening Dash`: Prevents opening the dashboard, and closes it if already opened.
+- `Show Dash Screens`: **[+ string]** When enabled, any dashboard screens not in this list will be hidden.
+- `Hide Dash Screens`: **[+ string]** When enabled, any dashboard screens in this list will be hidden.
   - The exit screen can not be hidden.
   - _ShowDashScreens_ is evaluated before _HideDashScreens_ if both are enabled.
   - For non-custom screens, you need to list their locale string names. See the "interact with the mod" section below.
-- `PreventUserScaling`: Prevents the user from rescaling themselves.
-- `PreventCrouching`: Prevents crouching in desktop mode.
-- `PreventJumping`: Prevents jumping, but does not prevent exiting anchors.
-- `PreventChangeLocomotion`: Prevents the user from changing their locomotion mode.
-- `ResetUserScale`: Utility variable that resets a user to their default scale.
+- `Disable Notifications`: The user can't see notifications anymore.
+- `Prevent Third Person View`: Desktop users can't switch to third person view anymore.
+
+### Locomotion
+- `Prevent User Scaling`: Prevents the user from rescaling themselves.
+- `Prevent Crouching`: Prevents crouching in desktop mode.
+- `Prevent Jumping`: Prevents jumping, but does not prevent exiting anchors.
+- `Prevent Climbing`: Prevents climbing by grabbing the world or characters.
+- `Prevent Change Locomotion`: Prevents the user from changing their locomotion mode.
+- `Reset User Scale`: Utility variable that resets a user to their default scale.
   - You should use this by enabling then disabling in the next frame. Think of it like an impulse.
   - Keeping it enabled does not prevent the user from rescaling themselves, and will only prevent other items from using this.
-- `PreventLeavingAnchors`: Prevents the user from leaving any anchor themselves.
+- `Prevent Leaving Anchors`: Prevents the user from leaving any anchor themselves.
 
 ## Installation
 
