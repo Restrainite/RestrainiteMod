@@ -28,6 +28,7 @@ internal enum PreventionType
     PreventUserScaling,
     PreventCrouching,
     PreventJumping,
+    PreventClimbing,
     PreventChangeLocomotion,
     ResetUserScale,
     PreventLeavingAnchors,
