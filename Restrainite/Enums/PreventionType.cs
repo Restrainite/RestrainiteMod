@@ -32,7 +32,8 @@ internal enum PreventionType
     PreventChangeLocomotion,
     ResetUserScale,
     PreventLeavingAnchors,
-    DisableNotifications
+    DisableNotifications,
+    PreventThirdPersonView
 }
 
 internal static class PreventionTypes
