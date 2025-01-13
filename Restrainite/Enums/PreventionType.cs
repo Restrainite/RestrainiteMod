@@ -35,7 +35,12 @@ internal enum PreventionType
     DisableNotifications,
     PreventThirdPersonView,
     ShowUserAvatars,
-    HideUserAvatars
+    HideUserAvatars,
+    AllowGrabbingTags,
+    DenyGrabbingTags,
+    AllowTouchingTags,
+    DenyTouchingTags,
+    PreventNonDashUserspaceInteraction
 }
 
 internal static class PreventionTypes
