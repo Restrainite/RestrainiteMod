@@ -34,6 +34,7 @@ internal enum PreventionType
     ResetUserScale,
     PreventLeavingAnchors,
     DisableNotifications,
+    PreventSendingMessages,
     PreventThirdPersonView,
     ShowUserAvatars,
     HideUserAvatars
