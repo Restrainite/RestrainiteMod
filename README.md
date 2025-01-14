@@ -10,7 +10,7 @@ There is currently no known way to restrict this based on user ids or similar, b
 
 ## Features/Restrictions
 
-_(As of version 0.4.5)_
+_(As of version 0.4.7)_
 
 ### Interaction
 - `Prevent Equipping Avatar`: Prevents equipping in-world avatars or switching from inventory.
@@ -50,6 +50,8 @@ _(As of version 0.4.5)_
   - _ShowDashScreens_ is evaluated before _HideDashScreens_ if both are enabled.
   - For non-custom screens, you need to list their locale string names. See the "interact with the mod" section below.
 - `Disable Notifications`: The user can't see notifications anymore.
+- `Prevent Sending Messages`: The user can't send messages to contacts.
+- `Prevent Invite Contact`: The user can't invite contacts to the current world.
 - `Prevent Third Person View`: Desktop users can't switch to third person view anymore.
 
 ### Locomotion
