@@ -52,6 +52,7 @@ _(As of version 0.4.2)_
 - `Prevent User Scaling`: Prevents the user from rescaling themselves.
 - `Prevent Crouching`: Prevents crouching in desktop mode.
 - `Prevent Jumping`: Prevents jumping, but does not prevent exiting anchors.
+- `Prevent Running`: Prevents running, when using keyboard (double tap or shift) or gamepad controls (joystick press).
 - `Prevent Climbing`: Prevents climbing by grabbing the world or characters.
 - `Prevent Change Locomotion`: Prevents the user from changing their locomotion mode.
 - `Reset User Scale`: Utility variable that resets a user to their default scale.
