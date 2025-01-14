@@ -9,7 +9,7 @@ internal class AllowOrDenyTouching
 {
 	static bool IsItemTouchable(Slot slot, bool checkObjectRoot = true)
 	{
-		string tag = slot.Tag;
+		string tag = string.IsNullOrEmpty(slot.Tag) ? "null" : slot.Tag;
 		bool result = true;
 		
 		if (RestrainiteMod.IsRestricted(PreventionType.AllowTouchingTags))
@@ -24,8 +24,8 @@ internal class AllowOrDenyTouching
 			result &= !denied.Contains(tag);
 		}
 		
-		if (checkObjectRoot)
-			result &= IsItemTouchable(slot.GetObjectRoot(), false);
+		if (checkObjectRoot && slot.GetObjectRoot() is Slot root)
+			result &= IsItemTouchable(root, false);
 
 		return result;
 	}

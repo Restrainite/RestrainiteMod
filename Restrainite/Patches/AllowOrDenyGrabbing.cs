@@ -11,7 +11,7 @@ internal class AllowOrDenyGrabbing
 {
 	static bool IsItemGrabbable(Slot slot, bool checkObjectRoot = true)
 	{
-		string tag = slot.Tag;
+		string tag = string.IsNullOrEmpty(slot.Tag) ? "null" : slot.Tag;
 		bool result = true;
 		
 		if (RestrainiteMod.IsRestricted(PreventionType.AllowGrabbingTags))
@@ -26,8 +26,8 @@ internal class AllowOrDenyGrabbing
 			result &= !denied.Contains(tag);
 		}
 		
-		if (checkObjectRoot)
-			result &= IsItemGrabbable(slot.GetObjectRoot(), false);
+		if (checkObjectRoot && slot.GetObjectRoot() is Slot root)
+			result &= IsItemGrabbable(root, false);
 
 		return result;
 	}
