@@ -37,6 +37,8 @@ internal enum PreventionType
     PreventSendingMessages,
     PreventInviteContact,
     PreventThirdPersonView,
+    PreventSpawnObjects,
+    PreventSaveItems,
     ShowUserAvatars,
     HideUserAvatars
 }

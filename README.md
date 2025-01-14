@@ -19,6 +19,8 @@ _(As of version 0.4.7)_
 - `Prevent Laser Touch`: Prevents any laser-based interaction.
 - `Prevent Physical Touch`: Prevents any physically-based interaction.
     - _PreventLaserTouch_ & _PreventPhysicalTouch_ also prevent grabbing respectively.
+- `Prevent Spawn Objects`: Prevents spawning objects into the current world.
+- `Prevent Save Items`: Prevents saving items to the inventory.
 
 ### Respawning and changing worlds
 - `Prevent Respawning`: Prevents respawning, including emergency respawn gesture.
