@@ -39,6 +39,8 @@ internal enum PreventionType
     PreventThirdPersonView,
     PreventSpawnObjects,
     PreventSaveItems,
+    PreventMovement,
+    PreventTurning,
     ShowUserAvatars,
     HideUserAvatars
 }

@@ -67,6 +67,8 @@ _(As of version 0.4.7)_
   - You should use this by enabling then disabling in the next frame. Think of it like an impulse.
   - Keeping it enabled does not prevent the user from rescaling themselves, and will only prevent other items from using this.
 - `Prevent Leaving Anchors`: Prevents the user from leaving any anchor themselves.
+- `Prevent Movement`: Prevent the user being able to move around via VR controller or keyboard.
+- `Prevent Turning`: Prevent the user from turning his body via VR controller or look around via mouse or keyboard. The user is still able to look around in VR by turning his head. Turning can't be restricted for Gamepad users.
 
 ## Installation
 
