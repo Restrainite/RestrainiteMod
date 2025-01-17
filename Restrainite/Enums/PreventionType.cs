@@ -43,10 +43,10 @@ internal enum PreventionType
     PreventTurning,
     ShowUserAvatars,
     HideUserAvatars,
-    AllowGrabbingTags,
-    DenyGrabbingTags,
-    AllowTouchingTags,
-    DenyTouchingTags,
+    AllowGrabbingBySlotTags,
+    DenyGrabbingBySlotTags,
+    AllowTouchingBySlotTags,
+    DenyTouchingBySlotTags,
     PreventNonDashUserspaceInteraction,
     DisableNameplates
 }

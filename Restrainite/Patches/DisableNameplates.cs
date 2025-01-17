@@ -1,71 +1,56 @@
 ﻿using FrooxEngine;
+using ResoniteModLoader;
 using Restrainite.Enums;
 
 namespace Restrainite.Patches;
 
-internal class DisableNameplates
+internal static class DisableNameplates
 {
-	private static NamePlateSettings? _nameplateSettings = Settings.GetActiveSetting<NamePlateSettings>();
-	private static NameplateVisibility _originalVisibility = _nameplateSettings?.NameplateVisibility.Value ?? NameplateVisibility.All;
-	private static bool _listenerRegistered = false;
+    private static NameplateVisibility _originalVisibility;
 
-	internal static void Initialize()
-	{
-		RestrainiteMod.OnRestrictionChanged += OnRestrictionChanged;
-		RegisterSettingsListener(true);
-	}
+    internal static void Initialize()
+    {
+        RestrainiteMod.OnRestrictionChanged += OnRestrictionChanged;
 
-	private static void OnRestrictionChanged(PreventionType preventionType, bool value)
-	{
-		if (preventionType != PreventionType.DisableNameplates) return;
-		_nameplateSettings ??= Settings.GetActiveSetting<NamePlateSettings>();
-		if (_nameplateSettings == null)
-		{
-			RestrainiteMod.Warn("Couldn't acquire NameplateSettings reference");
-			return;
-		}
+        Settings.RegisterValueChanges<NamePlateSettings>(OnNamePlateSettingsChanged);
 
-		if (value)
-		{
-			_originalVisibility = _nameplateSettings.NameplateVisibility.Value;
-			TrySetNameplateVisibility(NameplateVisibility.None);
-			RegisterSettingsListener(true);
-		}
-		else
-		{
-			// RegisterSettingsListener(false);
-			TrySetNameplateVisibility(_originalVisibility);
-		}
-	}
+        var nameplateSettings = Settings.GetActiveSetting<NamePlateSettings>();
+        if (nameplateSettings != null) _originalVisibility = nameplateSettings.NameplateVisibility.Value;
+    }
 
-	private static void OnNamePlateSettingsChanged(NamePlateSettings nameplateSettings)
-	{
-		_nameplateSettings = nameplateSettings;
-		if (RestrainiteMod.IsRestricted(PreventionType.DisableNameplates) &&
-		    nameplateSettings.NameplateVisibility.Value != NameplateVisibility.None)
-		{
-		    // Called in userspace world thread
-			nameplateSettings.NameplateVisibility.Value = NameplateVisibility.None;
-		}
-	}
+    private static void OnRestrictionChanged(PreventionType preventionType, bool value)
+    {
+        if (preventionType != PreventionType.DisableNameplates) return;
 
-	private static void RegisterSettingsListener(bool status)
-	{
-		if (status == _listenerRegistered) return;
-		if (status)
-			Settings.RegisterValueChanges<NamePlateSettings>(OnNamePlateSettingsChanged);
-		else
-			Settings.UnregisterValueChanges<NamePlateSettings>(OnNamePlateSettingsChanged);
-		_listenerRegistered = status;
-	}
+        var nameplateSettings = Settings.GetActiveSetting<NamePlateSettings>();
+        if (nameplateSettings == null)
+        {
+            ResoniteMod.Warn("Couldn't acquire NameplateSettings reference");
+            return;
+        }
 
-	private static bool TrySetNameplateVisibility(NameplateVisibility visibility)
-	{
-		if (_nameplateSettings == null) return false;
-		Userspace.UserspaceWorld.RunSynchronously(delegate
-		{
-			_nameplateSettings.NameplateVisibility.Value = visibility;
-		});
-		return true;
-	}
+        if (value)
+        {
+            _originalVisibility = nameplateSettings.NameplateVisibility.Value;
+            Settings.UpdateActiveSetting<NamePlateSettings>(
+                namePlateSettings => namePlateSettings.NameplateVisibility.Value = NameplateVisibility.None
+            );
+        }
+        else
+        {
+            Settings.UpdateActiveSetting<NamePlateSettings>(
+                namePlateSettings => namePlateSettings.NameplateVisibility.Value = _originalVisibility
+            );
+        }
+    }
+
+    private static void OnNamePlateSettingsChanged(NamePlateSettings nameplateSettings)
+    {
+        if (!RestrainiteMod.IsRestricted(PreventionType.DisableNameplates) ||
+            nameplateSettings.NameplateVisibility.Value == NameplateVisibility.None) return;
+
+        Settings.UpdateActiveSetting<NamePlateSettings>(
+            settings => settings.NameplateVisibility.Value = NameplateVisibility.None
+        );
+    }
 }

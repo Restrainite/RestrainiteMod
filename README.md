@@ -21,13 +21,15 @@ _(As of version 0.4.10)_
     - _PreventLaserTouch_ & _PreventPhysicalTouch_ also prevent grabbing respectively.
 - `Prevent Spawn Objects`: Prevents spawning objects into the current world.
 - `Prevent Save Items`: Prevents saving items to the inventory.
-- `Allow Grabbing Tags`: **[+ string]** When enabled, only allows grabbing items with tags in this list.
-- `Deny Grabbing Tags`: **[+ string]** When enabled, prevents grabbing any items with tags in this list.
+- `Allow Grabbing By Slot Tags`: **[+ string]** When enabled, only allows grabbing items with tags in this list.
+- `Deny Grabbing By Slot Tags`: **[+ string]** When enabled, prevents grabbing any items with tags in this list.
   - _AllowGrabbingTags_ is evaluated before _DenyGrabbingTags_ if both are enabled.
+  - Slots without tag will be evaluated with the string "null". 
   - _PreventGrabbing_ takes precedence over both of these options.
-- `Allow Touching Tags`: **[+ string]** When enabled, only allows interacting with items with tags in this list.
-- `Deny Touching Tags`: **[+ string]** When enabled, prevents interacting with any items with tags in this list.
+- `Allow Touching By Slot Tags`: **[+ string]** When enabled, only allows interacting with items with tags in this list.
+- `Deny Touching By Slot Tags`: **[+ string]** When enabled, prevents interacting with any items with tags in this list.
   - _AllowTouchingTags_ is evaluated before _DenyTouchingTags_ if both are enabled.
+  - Slots without tag will be evaluated with the string "null".
   - _PreventPhysicalTouch_ and _PreventLaserTouch_ take precedence over these options.
 - `Prevent Non Dash Userspace Interaction`: Prevents interacting with anything in userspace besides the dashboard (facet anchors, userspace inspectors, etc.).
 
@@ -109,6 +111,8 @@ For certain features, it's also possible to add a `DynamicValueVariable<string>`
 from the base game, use the locale keys to refer to them, e.g. Interaction.Undo. 
 See [Resonite Locale](https://github.com/Yellow-Dog-Man/Locale/blob/main/en.json)
 
+If you create a remote, use the tag "RestrainiteRemote" on the object root. This helps with the restrictions 
+`Deny Grabbing By Slot Tags` and similar.
 
 ## Why does this exist?
 
