@@ -10,7 +10,7 @@ There is currently no known way to restrict this based on user ids or similar, b
 
 ## Features/Restrictions
 
-_(As of version 0.4.2)_
+_(As of version 0.4.7)_
 
 ### Interaction
 - `Prevent Equipping Avatar`: Prevents equipping in-world avatars or switching from inventory.
@@ -19,15 +19,21 @@ _(As of version 0.4.2)_
 - `Prevent Laser Touch`: Prevents any laser-based interaction.
 - `Prevent Physical Touch`: Prevents any physically-based interaction.
     - _PreventLaserTouch_ & _PreventPhysicalTouch_ also prevent grabbing respectively.
+- `Prevent Spawn Objects`: Prevents spawning objects into the current world.
+- `Prevent Save Items`: Prevents saving items to the inventory.
 
 ### Respawning and changing worlds
 - `Prevent Respawning`: Prevents respawning, including emergency respawn gesture.
 - `Prevent Emergency Respawning`: Prevents using the emergency respawn gesture (can still respawn via session users tab).
 - `Prevent Switching World`: Prevents starting a new world, joining another session, leaving the current world, or changing focus.
 
+### Visual
+- `Show User Avatars`: **[+ string]** When enabled, only user avatars are shown, whose user id is in the list.
+- `Hide User Avatars`: **[+ string]** When enabled, user avatars are hidden, whose user id is in the list.
+
 ### Audio
 - `Prevent Hearing`: Forces all other users voices to be muted.
-- `Enforce Selective Hearing` **[+ string]**: When enabled, All users will be muted except those whose **user-ID's** (not usernames) are in this list.
+- `Enforce Selective Hearing`: **[+ string]** When enabled, All users will be muted except those whose **user-ID's** (not usernames) are in this list.
   - _PreventHearing_ takes precedence over _EnforceSelectiveHearing_.
 - `Prevent Speaking`: Forces the user to be muted.
 - `Enforce Whispering`: Forces the user to only be able to talk in whisper mode (they can still mute themselves).
@@ -46,18 +52,23 @@ _(As of version 0.4.2)_
   - _ShowDashScreens_ is evaluated before _HideDashScreens_ if both are enabled.
   - For non-custom screens, you need to list their locale string names. See the "interact with the mod" section below.
 - `Disable Notifications`: The user can't see notifications anymore.
+- `Prevent Sending Messages`: The user can't send messages to contacts.
+- `Prevent Invite Contact`: The user can't invite contacts to the current world.
 - `Prevent Third Person View`: Desktop users can't switch to third person view anymore.
 
 ### Locomotion
 - `Prevent User Scaling`: Prevents the user from rescaling themselves.
 - `Prevent Crouching`: Prevents crouching in desktop mode.
 - `Prevent Jumping`: Prevents jumping, but does not prevent exiting anchors.
+- `Prevent Running`: Prevents running, when using keyboard (double tap or shift) or gamepad controls (joystick press).
 - `Prevent Climbing`: Prevents climbing by grabbing the world or characters.
 - `Prevent Change Locomotion`: Prevents the user from changing their locomotion mode.
 - `Reset User Scale`: Utility variable that resets a user to their default scale.
   - You should use this by enabling then disabling in the next frame. Think of it like an impulse.
   - Keeping it enabled does not prevent the user from rescaling themselves, and will only prevent other items from using this.
 - `Prevent Leaving Anchors`: Prevents the user from leaving any anchor themselves.
+- `Prevent Movement`: Prevent the user being able to move around via VR controller or keyboard.
+- `Prevent Turning`: Prevent the user from turning his body via VR controller or look around via mouse or keyboard. The user is still able to look around in VR by turning his head. Turning can't be restricted for Gamepad users.
 
 ## Installation
 
