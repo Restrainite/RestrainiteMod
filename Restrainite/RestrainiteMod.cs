@@ -51,6 +51,7 @@ public class RestrainiteMod : ResoniteMod
         PreventLaserTouch.Initialize();
         PreventUserScaling.Initialize();
         ShowOrHideUserAvatars.Initialize();
+        DisableNameplates.Initialize();
     }
 
     internal static bool IsRestricted(PreventionType preventionType)

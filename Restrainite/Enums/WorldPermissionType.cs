@@ -7,7 +7,7 @@ using SkyFrost.Base;
 
 namespace Restrainite.Enums;
 
-public enum WorldPermissionType
+internal enum WorldPermissionType
 {
     AnyoneHidden,
     AnyoneNonHidden,

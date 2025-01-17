@@ -42,7 +42,13 @@ internal enum PreventionType
     PreventMovement,
     PreventTurning,
     ShowUserAvatars,
-    HideUserAvatars
+    HideUserAvatars,
+    AllowGrabbingBySlotTags,
+    DenyGrabbingBySlotTags,
+    AllowTouchingBySlotTags,
+    DenyTouchingBySlotTags,
+    PreventNonDashUserspaceInteraction,
+    DisableNameplates
 }
 
 internal static class PreventionTypes
