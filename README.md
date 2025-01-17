@@ -10,7 +10,7 @@ There is currently no known way to restrict this based on user ids or similar, b
 
 ## Features/Restrictions
 
-_(As of version 0.4.7)_
+_(As of version 0.4.10)_
 
 ### Interaction
 - `Prevent Equipping Avatar`: Prevents equipping in-world avatars or switching from inventory.
@@ -21,6 +21,15 @@ _(As of version 0.4.7)_
     - _PreventLaserTouch_ & _PreventPhysicalTouch_ also prevent grabbing respectively.
 - `Prevent Spawn Objects`: Prevents spawning objects into the current world.
 - `Prevent Save Items`: Prevents saving items to the inventory.
+- `Allow Grabbing Tags`: **[+ string]** When enabled, only allows grabbing items with tags in this list.
+- `Deny Grabbing Tags`: **[+ string]** When enabled, prevents grabbing any items with tags in this list.
+  - _AllowGrabbingTags_ is evaluated before _DenyGrabbingTags_ if both are enabled.
+  - _PreventGrabbing_ takes precedence over both of these options.
+- `Allow Touching Tags`: **[+ string]** When enabled, only allows interacting with items with tags in this list.
+- `Deny Touching Tags`: **[+ string]** When enabled, prevents interacting with any items with tags in this list.
+  - _AllowTouchingTags_ is evaluated before _DenyTouchingTags_ if both are enabled.
+  - _PreventPhysicalTouch_ and _PreventLaserTouch_ take precedence over these options.
+- `Prevent Non Dash Userspace Interaction`: Prevents interacting with anything in userspace besides the dashboard (facet anchors, userspace inspectors, etc.).
 
 ### Respawning and changing worlds
 - `Prevent Respawning`: Prevents respawning, including emergency respawn gesture.
@@ -30,6 +39,7 @@ _(As of version 0.4.7)_
 ### Visual
 - `Show User Avatars`: **[+ string]** When enabled, only user avatars are shown, whose user id is in the list.
 - `Hide User Avatars`: **[+ string]** When enabled, user avatars are hidden, whose user id is in the list.
+- `Disable Nameplates`: Hides all avatar nameplates.
 
 ### Audio
 - `Prevent Hearing`: Forces all other users voices to be muted.
