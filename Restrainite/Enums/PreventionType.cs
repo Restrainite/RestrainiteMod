@@ -40,7 +40,8 @@ internal enum PreventionType
     DenyGrabbingTags,
     AllowTouchingTags,
     DenyTouchingTags,
-    PreventNonDashUserspaceInteraction
+    PreventNonDashUserspaceInteraction,
+    DisableNameplates
 }
 
 internal static class PreventionTypes
