@@ -7,15 +7,18 @@ internal class DisableNameplates
 {
 	private static NamePlateSettings? _nameplateSettings = Settings.GetActiveSetting<NamePlateSettings>();
 	private static NameplateVisibility _originalVisibility = _nameplateSettings?.NameplateVisibility.Value ?? NameplateVisibility.All;
+	private static bool _listenerRegistered = false;
 
 	internal static void Initialize()
 	{
 		RestrainiteMod.OnRestrictionChanged += OnRestrictionChanged;
+		RegisterSettingsListener(true);
 	}
 
 	private static void OnRestrictionChanged(PreventionType preventionType, bool value)
 	{
 		if (preventionType != PreventionType.DisableNameplates) return;
+		_nameplateSettings ??= Settings.GetActiveSetting<NamePlateSettings>();
 		if (_nameplateSettings == null)
 		{
 			RestrainiteMod.Warn("Couldn't acquire NameplateSettings reference");
@@ -25,13 +28,13 @@ internal class DisableNameplates
 		if (value)
 		{
 			_originalVisibility = _nameplateSettings.NameplateVisibility.Value;
-			_nameplateSettings.NameplateVisibility.Value = NameplateVisibility.None;
-			Settings.RegisterValueChanges<NamePlateSettings>(OnNamePlateSettingsChanged);
+			TrySetNameplateVisibility(NameplateVisibility.None);
+			RegisterSettingsListener(true);
 		}
 		else
 		{
-			Settings.UnregisterValueChanges<NamePlateSettings>(OnNamePlateSettingsChanged);
-			_nameplateSettings.NameplateVisibility.Value = _originalVisibility;
+			// RegisterSettingsListener(false);
+			TrySetNameplateVisibility(_originalVisibility);
 		}
 	}
 
@@ -41,7 +44,28 @@ internal class DisableNameplates
 		if (RestrainiteMod.IsRestricted(PreventionType.DisableNameplates) &&
 		    nameplateSettings.NameplateVisibility.Value != NameplateVisibility.None)
 		{
+		    // Called in userspace world thread
 			nameplateSettings.NameplateVisibility.Value = NameplateVisibility.None;
 		}
+	}
+
+	private static void RegisterSettingsListener(bool status)
+	{
+		if (status == _listenerRegistered) return;
+		if (status)
+			Settings.RegisterValueChanges<NamePlateSettings>(OnNamePlateSettingsChanged);
+		else
+			Settings.UnregisterValueChanges<NamePlateSettings>(OnNamePlateSettingsChanged);
+		_listenerRegistered = status;
+	}
+
+	private static bool TrySetNameplateVisibility(NameplateVisibility visibility)
+	{
+		if (_nameplateSettings == null) return false;
+		Userspace.UserspaceWorld.RunSynchronously(delegate
+		{
+			_nameplateSettings.NameplateVisibility.Value = visibility;
+		});
+		return true;
 	}
 }
