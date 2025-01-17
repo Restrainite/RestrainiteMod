@@ -259,6 +259,7 @@ internal class Configuration
         if (preventionType.HasValue && !IsPreventionTypeEnabled(preventionType.Value)) return false;
 
         return world == world?.WorldManager.FocusedWorld ||
+               world == Userspace.UserspaceWorld ||
                (
                    !(_config?.GetValue(_allowRestrictionsFromFocusedWorldOnly) ?? true) &&
                    GetWorldPresetChangeType(world) != PresetChangeType.None
