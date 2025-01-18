@@ -36,6 +36,6 @@ internal static class PreventGrabbing
     private static bool PreventGrabbing_InteractionHandlerStartGrab_Prefix(InteractionHandler __instance)
     {
         return __instance.World == Userspace.UserspaceWorld ||
-                !RestrainiteMod.IsRestricted(PreventionType.PreventGrabbing);
+               !RestrainiteMod.IsRestricted(PreventionType.PreventGrabbing);
     }
 }

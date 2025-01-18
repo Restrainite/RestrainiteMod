@@ -24,9 +24,10 @@ internal static class PreventOpeningContextMenu
 
     [HarmonyPrefix]
     [HarmonyPatch(typeof(InteractionHandler), "TryOpenContextMenu")]
-    private static bool PreventOpeningContextMenu_InteractionHandlerTryOpenContextMenu_Prefix(InteractionHandler __instance)
+    private static bool PreventOpeningContextMenu_InteractionHandlerTryOpenContextMenu_Prefix(
+        InteractionHandler __instance)
     {
         return __instance.World == Userspace.UserspaceWorld ||
-                !RestrainiteMod.IsRestricted(PreventionType.PreventOpeningContextMenu);
+               !RestrainiteMod.IsRestricted(PreventionType.PreventOpeningContextMenu);
     }
 }

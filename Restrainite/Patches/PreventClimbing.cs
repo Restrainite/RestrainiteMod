@@ -16,7 +16,7 @@ internal static class PreventClimbing
         ___currentAnchor = null;
         return false;
     }
-    
+
     [HarmonyPrefix]
     [HarmonyPatch(typeof(GrabWorldLocomotion), "CheckDeactivate")]
     private static bool PreventClimbing_GrabWorldLocomotionCheckDeactivate_Prefix(ref float3? ___currentAnchor)
@@ -25,7 +25,7 @@ internal static class PreventClimbing
         ___currentAnchor = null;
         return false;
     }
-    
+
     [HarmonyPrefix]
     [HarmonyPatch(typeof(PhysicalLocomotion), "CheckKeepGrip")]
     private static bool PreventClimbingPhysicalLocomotionCheckKeepGrip_Prefix(ref bool __result)
@@ -34,7 +34,7 @@ internal static class PreventClimbing
         __result = false;
         return false;
     }
-    
+
     [HarmonyPrefix]
     [HarmonyPatch(typeof(PhysicalLocomotion), "CheckAquireGrip")]
     private static bool PreventClimbingPhysicalLocomotionCheckAquireGrip_Prefix()

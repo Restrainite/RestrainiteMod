@@ -18,7 +18,8 @@ internal static class PreventUsingTools
 
     [HarmonyPostfix]
     [HarmonyPatch(typeof(InteractionHandler), nameof(InteractionHandler.CanKeepEquipped))]
-    private static bool PreventUsingTools_InteractionHandlerCanKeepEquipped_Postfix(bool result, InteractionHandler __instance)
+    private static bool PreventUsingTools_InteractionHandlerCanKeepEquipped_Postfix(bool result,
+        InteractionHandler __instance)
     {
         if (__instance.World == Userspace.UserspaceWorld) return result;
 

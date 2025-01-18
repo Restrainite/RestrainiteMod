@@ -11,7 +11,7 @@ namespace Restrainite.Patches;
 internal static class ShowOrHideUserAvatars
 {
     private static readonly ThreadLocal<bool> InUpdateBlocking = new();
-    
+
     internal static void Initialize()
     {
         RestrainiteMod.OnRestrictionChanged += OnRestrictionChanged;

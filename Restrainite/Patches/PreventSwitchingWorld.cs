@@ -25,11 +25,13 @@ internal static class PreventSwitchingWorld
             yield return AccessTools.Method(typeof(WorldCloseAction), "Pressed");
             yield return AccessTools.Method(typeof(WorldSwitcher), "WorldOrbLongPressed");
         }
-        
+
         private static bool Prefix()
-            => !RestrainiteMod.IsRestricted(PreventionType.PreventSwitchingWorld);
+        {
+            return !RestrainiteMod.IsRestricted(PreventionType.PreventSwitchingWorld);
+        }
     }
-    
+
     [HarmonyPatch]
     private static class UserspaceExitWorldPatches
     {
@@ -37,13 +39,17 @@ internal static class PreventSwitchingWorld
         {
             yield return AccessTools.Method(typeof(Userspace), "ExitWorld");
         }
-        
+
         private static bool Prefix()
-            => !(InOnCommonUpdate.Value || InInteractionHandlerHoldMenu.Value) || 
-               !RestrainiteMod.IsRestricted(PreventionType.PreventSwitchingWorld);
+        {
+            return !(
+                (InOnCommonUpdate.Value || InInteractionHandlerHoldMenu.Value) &&
+                RestrainiteMod.IsRestricted(PreventionType.PreventSwitchingWorld)
+            );
+        }
     }
-    
-    
+
+
     [HarmonyPatch]
     private static class OpenWorldPatches
     {
@@ -55,7 +61,9 @@ internal static class PreventSwitchingWorld
         }
 
         private static bool Prefix()
-            => !RestrainiteMod.IsRestricted(PreventionType.PreventSwitchingWorld);
+        {
+            return !RestrainiteMod.IsRestricted(PreventionType.PreventSwitchingWorld);
+        }
     }
 
 
@@ -79,10 +87,12 @@ internal static class PreventSwitchingWorld
             yield return AccessTools.Method(typeof(OpenWorld), "RunWorldAction");
         }
 
-        private static bool Prefix() 
-            => !RestrainiteMod.IsRestricted(PreventionType.PreventSwitchingWorld);
+        private static bool Prefix()
+        {
+            return !RestrainiteMod.IsRestricted(PreventionType.PreventSwitchingWorld);
+        }
     }
-    
+
     // Prevent world switching via LCtrl + Tab, or closing of the world via LCtrl + LShift + Q or LShift + Esc
     [HarmonyPatch]
     private static class UserspaceOnCommonUpdatePatch
@@ -93,7 +103,7 @@ internal static class PreventSwitchingWorld
         {
             InOnCommonUpdate.Value = true;
         }
-        
+
         [HarmonyPatch(typeof(Userspace), "OnCommonUpdate")]
         [HarmonyPostfix]
         private static void OnCommonUpdate_Postfix()
@@ -101,7 +111,7 @@ internal static class PreventSwitchingWorld
             InOnCommonUpdate.Value = false;
         }
     }
-    
+
     // Prevent world closing via emergency gesture
     [HarmonyPatch]
     private class InteractionHandlerHoldMenuPatch
@@ -112,7 +122,7 @@ internal static class PreventSwitchingWorld
         {
             InInteractionHandlerHoldMenu.Value = true;
         }
-        
+
         [HarmonyPatch(typeof(InteractionHandler), "HoldMenu")]
         [HarmonyPostfix]
         private static void HoldMenu_Postfix()
@@ -120,13 +130,18 @@ internal static class PreventSwitchingWorld
             InInteractionHandlerHoldMenu.Value = false;
         }
     }
-    
+
     [HarmonyPatch]
     private class WorldManagerPatch
     {
         [HarmonyPatch(typeof(WorldManager), nameof(WorldManager.FocusWorld))]
         [HarmonyPrefix]
-        private static bool Prefix() 
-            => !InOnCommonUpdate.Value || !RestrainiteMod.IsRestricted(PreventionType.PreventSwitchingWorld);
+        private static bool Prefix()
+        {
+            return !(
+                InOnCommonUpdate.Value &&
+                RestrainiteMod.IsRestricted(PreventionType.PreventSwitchingWorld)
+            );
+        }
     }
 }

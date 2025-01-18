@@ -66,10 +66,11 @@ internal static class ShowOrHideDashScreens
             RestrainiteMod.GetStrings(PreventionType.HideDashScreens).Contains(label))
             __instance.Dash.CurrentScreen.Target = __instance.Dash.GetScreen<ExitScreen>();
     }
-    
+
     [HarmonyPostfix]
     [HarmonyPatch(typeof(UserspaceRadiantDash), nameof(UserspaceRadiantDash.Open), MethodType.Setter)]
-    private static void ShowOrHideDashScreens_UserspaceRadiantDashOpen_Setter_Postfix(bool value, UserspaceRadiantDash __instance)
+    private static void ShowOrHideDashScreens_UserspaceRadiantDashOpen_Setter_Postfix(bool value,
+        UserspaceRadiantDash __instance)
     {
         if (!value) return;
 

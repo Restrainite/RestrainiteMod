@@ -59,14 +59,16 @@ internal class ShowOrHideContextMenuItems
             typeof(colorX?)
         ],
         [ArgumentType.Ref, ArgumentType.Normal, ArgumentType.Normal, ArgumentType.Normal, ArgumentType.Ref])]
-    public static void ShowOrHideContextMenuItems_ContextMenuAddItem_Postfix(LocaleString label, ContextMenuItem __result)
+    public static void ShowOrHideContextMenuItems_ContextMenuAddItem_Postfix(LocaleString label,
+        ContextMenuItem __result)
     {
         if (ShouldDisableButton(__result, label)) __result.Button.Slot.ActiveSelf = false;
     }
 
     [HarmonyPrefix]
     [HarmonyPatch(typeof(ContextMenu), "AddToggleItem")]
-    public static bool ShowOrHideContextMenuItems_ContextMenuAddToggleItem_Prefix(LocaleString trueLabel, LocaleString falseLabel, ContextMenu __instance)
+    public static bool ShowOrHideContextMenuItems_ContextMenuAddToggleItem_Prefix(LocaleString trueLabel,
+        LocaleString falseLabel, ContextMenu __instance)
     {
         return !(ShouldDisableButton(__instance, trueLabel) || ShouldDisableButton(__instance, falseLabel));
     }

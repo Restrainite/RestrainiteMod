@@ -3,7 +3,7 @@
         <Authors>SnepDrone, Zenuru</Authors>
         <Product>Restrainite</Product>
         <Description>Allows others to control restrictions of the local user</Description>
-        <Version>0.4.11</Version>
+        <Version>0.4.12</Version>
         <Copyright>&#169; 2024 $(Authors)</Copyright>
         <AssemblyVersion>$(Version)</AssemblyVersion>
         <AssemblyTitle>$(Product)</AssemblyTitle>
@@ -65,7 +65,7 @@
         </Reference>
     </ItemGroup>
     <Target Name="PostBuild" AfterTargets="PostBuildEvent">
-        <Copy SourceFiles="$(OutDir)$(TargetFileName)" DestinationFolder="$(ResonitePath)rml_mods"/>
-        <Message Text="Copied $(TargetFileName) to $(ResonitePath)rml_mods" Importance="high"/>
+        <Copy SourceFiles="$(OutDir)$(TargetFileName)" DestinationFolder="$(ResonitePath)rml_mods" />
+        <Message Text="Copied $(TargetFileName) to $(ResonitePath)rml_mods" Importance="high" />
     </Target>
 </Project>

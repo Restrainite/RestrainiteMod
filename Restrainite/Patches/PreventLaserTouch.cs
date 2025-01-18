@@ -11,7 +11,9 @@ internal static class PreventLaserTouch
 {
     private static bool _leftOriginalValue = true;
     private static bool _rightOriginalValue = true;
-    private static readonly FieldInfo LaserEnabledField = AccessTools.Field(typeof(InteractionHandler), "_laserEnabled");
+
+    private static readonly FieldInfo
+        LaserEnabledField = AccessTools.Field(typeof(InteractionHandler), "_laserEnabled");
 
     internal static void Initialize()
     {

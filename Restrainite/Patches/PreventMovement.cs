@@ -13,17 +13,17 @@ internal static class PreventMovement
     private static bool VR_LocomotionDirection_Evaluate_Prefix(ref float3? __result)
     {
         if (!RestrainiteMod.IsRestricted(PreventionType.PreventMovement)) return true;
-        
+
         __result = float3.Zero;
         return false;
     }
-    
+
     [HarmonyPrefix]
     [HarmonyPatch(typeof(ScreenLocomotionDirection), nameof(ScreenLocomotionDirection.Evaluate))]
     private static bool ScreenLocomotionDirection_Evaluate_Prefix(ref float3? __result)
     {
         if (!RestrainiteMod.IsRestricted(PreventionType.PreventMovement)) return true;
-        
+
         __result = float3.Zero;
         return false;
     }
