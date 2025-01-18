@@ -3,7 +3,7 @@
         <Authors>SnepDrone, Zenuru</Authors>
         <Product>Restrainite</Product>
         <Description>Allows others to control restrictions of the local user</Description>
-        <Version>0.4.10</Version>
+        <Version>0.4.11</Version>
         <Copyright>&#169; 2024 $(Authors)</Copyright>
         <AssemblyVersion>$(Version)</AssemblyVersion>
         <AssemblyTitle>$(Product)</AssemblyTitle>
@@ -53,6 +53,9 @@
         </Reference>
         <Reference Include="FrooxEngine">
             <HintPath>$(ResonitePath)Resonite_Data\Managed\FrooxEngine.dll</HintPath>
+        </Reference>
+        <Reference Include="ProtoFlux.Nodes.FrooxEngine">
+            <HintPath>$(ResonitePath)Resonite_Data\Managed\ProtoFlux.Nodes.FrooxEngine.dll</HintPath>
         </Reference>
         <Reference Include="ResoniteModLoader">
             <HintPath>$(ResonitePath)Libraries\ResoniteModLoader.dll</HintPath>
