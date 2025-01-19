@@ -1,56 +1,64 @@
-﻿using FrooxEngine;
-using ResoniteModLoader;
+﻿using System;
+using System.Collections.Generic;
+using System.Reflection;
+using FrooxEngine;
+using HarmonyLib;
 using Restrainite.Enums;
 
 namespace Restrainite.Patches;
 
+[HarmonyPatch]
 internal static class DisableNameplates
 {
-    private static NameplateVisibility _originalVisibility;
+    private static readonly List<WeakReference<AvatarNameplateVisibilityDriver>> AvatarNameplateVisibilityDriverList =
+        [];
+
+    private static readonly MethodInfo UpdateVisibility =
+        AccessTools.Method(typeof(AvatarNameplateVisibilityDriver), "UpdateVisibility");
 
     internal static void Initialize()
     {
         RestrainiteMod.OnRestrictionChanged += OnRestrictionChanged;
-
-        Settings.RegisterValueChanges<NamePlateSettings>(OnNamePlateSettingsChanged);
-
-        var nameplateSettings = Settings.GetActiveSetting<NamePlateSettings>();
-        if (nameplateSettings != null) _originalVisibility = nameplateSettings.NameplateVisibility.Value;
     }
 
     private static void OnRestrictionChanged(PreventionType preventionType, bool value)
     {
         if (preventionType != PreventionType.DisableNameplates) return;
 
-        var nameplateSettings = Settings.GetActiveSetting<NamePlateSettings>();
-        if (nameplateSettings == null)
-        {
-            ResoniteMod.Warn("Couldn't acquire NameplateSettings reference");
-            return;
-        }
+        foreach (var avatarNameplateVisibilityDriver in AvatarNameplateVisibilityDriverList)
+            if (avatarNameplateVisibilityDriver.TryGetTarget(out var avatarNameplateVisibilityDriverInstance) &&
+                avatarNameplateVisibilityDriverInstance != null)
+                UpdateVisibility.Invoke(avatarNameplateVisibilityDriverInstance, []);
 
-        if (value)
-        {
-            _originalVisibility = nameplateSettings.NameplateVisibility.Value;
-            Settings.UpdateActiveSetting<NamePlateSettings>(
-                namePlateSettings => namePlateSettings.NameplateVisibility.Value = NameplateVisibility.None
-            );
-        }
-        else
-        {
-            Settings.UpdateActiveSetting<NamePlateSettings>(
-                namePlateSettings => namePlateSettings.NameplateVisibility.Value = _originalVisibility
-            );
-        }
+        AvatarNameplateVisibilityDriverList.RemoveAll(
+            reference => !reference.TryGetTarget(out var target) || target == null
+        );
     }
 
-    private static void OnNamePlateSettingsChanged(NamePlateSettings nameplateSettings)
-    {
-        if (!RestrainiteMod.IsRestricted(PreventionType.DisableNameplates) ||
-            nameplateSettings.NameplateVisibility.Value == NameplateVisibility.None) return;
 
-        Settings.UpdateActiveSetting<NamePlateSettings>(
-            settings => settings.NameplateVisibility.Value = NameplateVisibility.None
+    [HarmonyPrefix]
+    [HarmonyPatch(typeof(AvatarNameplateVisibilityDriver), nameof(AvatarNameplateVisibilityDriver.ShouldBeVisible),
+        MethodType.Getter)]
+    private static bool ShouldBeVisiblePrefix(ref bool __result)
+    {
+        if (!RestrainiteMod.IsRestricted(PreventionType.DisableNameplates)) return true;
+        __result = false;
+        return false;
+    }
+
+    [HarmonyPostfix]
+    [HarmonyPatch(typeof(AvatarNameplateVisibilityDriver), "OnAwake")]
+    private static void OnAwakePostfix(AvatarNameplateVisibilityDriver __instance)
+    {
+        AvatarNameplateVisibilityDriverList.Add(new WeakReference<AvatarNameplateVisibilityDriver>(__instance));
+    }
+
+    [HarmonyPostfix]
+    [HarmonyPatch(typeof(AvatarNameplateVisibilityDriver), "OnDispose")]
+    private static void OnDisposePostfix(AvatarNameplateVisibilityDriver __instance)
+    {
+        AvatarNameplateVisibilityDriverList.RemoveAll(
+            reference => !reference.TryGetTarget(out var target) || target == null || target == __instance
         );
     }
 }
