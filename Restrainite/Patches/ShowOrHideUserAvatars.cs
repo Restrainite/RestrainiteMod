@@ -24,7 +24,10 @@ internal static class ShowOrHideUserAvatars
         if (userList is null) return;
         foreach (var slot in userList.Select(user => user?.Root?.Slot))
         {
-            slot?.ForeachComponentInChildren<Component>(c => c?.MarkChangeDirty());
+            slot?.RunInUpdates(0, () =>
+            {
+                slot.ForeachComponentInChildren<Component>(c => c?.MarkChangeDirty());
+            });
         }
     }
 

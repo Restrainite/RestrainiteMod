@@ -23,7 +23,8 @@ public class RestrainiteMod : ResoniteMod
     /**
      * OnRestrictionChanged will fire, when the restriction is activated or deactivated. It will take into account, if
      * the restriction is disabled by the user. It will run in the update cycle of the world that triggered the
-     * change. The value is debounced, meaning it will only trigger, if it actually changes.
+     * change. This doesn't have to be the focused world, so make sure, that any write operation are run in the next
+     * update cycle. The value is debounced, meaning it will only trigger, if it actually changes.
      */
     internal static event Action<PreventionType, bool>? OnRestrictionChanged;
 

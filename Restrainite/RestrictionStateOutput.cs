@@ -136,7 +136,9 @@ internal class RestrictionStateOutput
         Action<PreventionType, bool> onUpdate = (type, value) =>
         {
             if (preventionType == type)
-                component.Value.Value = value;
+            {
+                restrainiteSlot.RunInUpdates(0, () => component.Value.Value = value);
+            }
         };
         RestrainiteMod.OnRestrictionChanged += onUpdate;
         component.Disposing += _ => { RestrainiteMod.OnRestrictionChanged -= onUpdate; };
