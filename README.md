@@ -10,7 +10,7 @@ There is currently no known way to restrict this based on user ids or similar, b
 
 ## Settings
 
-The mod uses presets to easily switch between different sets of restrictions. When the None preset is active, the mod
+The mod uses presets to easily switch between different sets of restrictions. When the `None` preset is active, the mod
 is inactive and will not create status components.
 
 ## Features/Restrictions
