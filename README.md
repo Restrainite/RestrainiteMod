@@ -8,11 +8,11 @@ your game world can toggle it. Please keep that in mind and use the options in t
 There is currently no known way to restrict this based on user ids or similar, because of how the FrooxEngine works. 
 (PRs welcome!) We might add an option to use cloud variables in the future.
 
-# Documentation
+## Documentation
 
 Please check out the documentation at [restrainite.github.io](https://restrainite.github.io/) before using the mod.
 
-# Why does this exist?
+## Why does this exist?
 
 There are people who have various reasons for wanting certain features of the game disabled. A lot of these features 
 can also be disabled through other means like Protoflux and could be seen as malicious, because then they could be 
@@ -25,6 +25,6 @@ is not to remove safety features, but give people a consenting choice to disable
 
 If someone is using this mod maliciously, this a moderation issue. 
 
-# Contributing and Building from source
+## Contributing and Building from source
 
 See [CONTRIBUTING.md](./CONTRIBUTING.md).
