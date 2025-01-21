@@ -8,6 +8,11 @@ your game world can toggle it. Please keep that in mind and use the options in t
 There is currently no known way to restrict this based on user ids or similar, because of how the FrooxEngine works. 
 (PRs welcome!) We might add an option to use cloud variables in the future.
 
+## Settings
+
+The mod uses presets to easily switch between different sets of restrictions. When the None preset is active, the mod
+is inactive and will not create status components.
+
 ## Features/Restrictions
 
 _(As of version 0.4.10)_
