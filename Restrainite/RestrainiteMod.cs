@@ -33,6 +33,14 @@ public class RestrainiteMod : ResoniteMod
         Configuration.DefineConfiguration(builder);
     }
 
+    /*
+     * There are more graceful ways to handle incompatible configs, but this is the simplest.
+     * Default is ERROR (prevents saving), CLOBBER overwrites the config file.
+     */
+    public override IncompatibleConfigurationHandlingOption HandleIncompatibleConfigurationVersions(
+        Version serializedVersion, Version definedVersion)
+        => IncompatibleConfigurationHandlingOption.CLOBBER;
+
     public override void OnEngineInit()
     {
         Configuration.Init(GetConfiguration());
