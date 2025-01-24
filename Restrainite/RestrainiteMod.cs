@@ -18,7 +18,7 @@ public class RestrainiteMod : ResoniteMod
     public static Version AssemblyVersion => typeof(RestrainiteMod).Assembly.GetName().Version;
     public override string Version => $"{AssemblyVersion.Major}.{AssemblyVersion.Minor}.{AssemblyVersion.Build}";
 
-    public override string Link => "https://github.com/SnepDrone/Restrainite";
+    public override string Link => "https://restrainite.github.io";
 
     /**
      * OnRestrictionChanged will fire, when the restriction is activated or deactivated. It will take into account, if
