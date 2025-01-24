@@ -3,7 +3,7 @@
         <Authors>SnepDrone, Zenuru</Authors>
         <Product>Restrainite</Product>
         <Description>Allows others to control restrictions of the local user</Description>
-        <Version>0.4.14</Version>
+        <Version>1.0.0</Version>
         <Copyright>&#169; 2024-2025 $(Authors)</Copyright>
         <AssemblyVersion>$(Version)</AssemblyVersion>
         <AssemblyTitle>$(Product)</AssemblyTitle>

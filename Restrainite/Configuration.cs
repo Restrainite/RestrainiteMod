@@ -53,6 +53,7 @@ internal class Configuration
     public void DefineConfiguration(ModConfigurationDefinitionBuilder builder)
     {
         ResoniteMod.Msg("Define configuration");
+        builder.Version(RestrainiteMod.AssemblyVersion);
         builder.Key(_presetConfig);
         builder.Key(_presetStartupConfig);
 
