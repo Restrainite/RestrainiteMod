@@ -49,6 +49,12 @@ internal class Configuration
 
     internal bool SendDynamicImpulses => _config?.GetValue(_sendDynamicImpulses) ?? true;
 
+    internal PresetType? CurrentPreset
+    {
+        get => _config?.GetValue(_presetConfig);
+        set => _config?.Set(_presetConfig, value);
+    }
+
     internal event Action? ShouldRecheckPermissions;
 
     public void DefineConfiguration(ModConfigurationDefinitionBuilder builder)
@@ -261,7 +267,7 @@ internal class Configuration
         if (preventionType.HasValue && !IsPreventionTypeEnabled(preventionType.Value)) return false;
 
         if (IsLocalHome(world) || IsLocalHome(world?.WorldManager.FocusedWorld)) return false;
-        
+
         return world == world?.WorldManager.FocusedWorld ||
                world == Userspace.UserspaceWorld ||
                (

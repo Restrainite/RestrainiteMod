@@ -33,7 +33,8 @@ internal class RestrictionStateOutput
     private void ShowOrHideRestrainiteRootSlot()
     {
         if (!_userSlot.TryGetTarget(out var userSlot)) return;
-        var show = _configuration.AllowRestrictionsFromWorld(userSlot.World);
+        var show = _configuration.AllowRestrictionsFromWorld(userSlot.World) ||
+                   userSlot.World == Userspace.UserspaceWorld;
         if (!show && !_isBeingShown) return;
         _isBeingShown = show;
 
@@ -52,6 +53,8 @@ internal class RestrictionStateOutput
         _oldSlot = new WeakReference<Slot>(restrainiteSlot);
 
         CreateVersionComponent(restrainiteSlot);
+
+        if (restrainiteSlot.World == Userspace.UserspaceWorld) CreatePresetComponent(restrainiteSlot);
 
         AddOrRemoveComponents(restrainiteSlot);
     }
@@ -111,18 +114,48 @@ internal class RestrictionStateOutput
             RemoveComponents(restrainiteSlot, preventionType);
     }
 
-    private void CreateVersionComponent(Slot restrainiteSlot)
+    private static void CreateVersionComponent(Slot restrainiteSlot)
     {
-        var versionName = $"{DynamicVariableSpaceStatusName}/Version";
+        const string versionName = $"{DynamicVariableSpaceStatusName}/Version";
         var component = restrainiteSlot.GetComponentOrAttach<DynamicValueVariable<uint3>>(
             search => versionName.Equals(search.VariableName.Value));
         component.VariableName.Value = versionName;
+        component.Persistent = false;
         var version = RestrainiteMod.AssemblyVersion;
         var versionArray = new uint3(
             version.Major < 0 ? 0 : (uint)version.Major,
             version.Minor < 0 ? 0 : (uint)version.Minor,
             version.Build < 0 ? 0 : (uint)version.Build);
         component.Value.Value = versionArray;
+    }
+
+    private void CreatePresetComponent(Slot restrainiteSlot)
+    {
+        const string presetName = $"{DynamicVariableSpaceStatusName}/Preset";
+        var component = restrainiteSlot.GetComponentOrAttach<DynamicValueVariable<string>>(
+            out var attached,
+            search => presetName.Equals(search.VariableName.Value));
+        component.VariableName.Value = presetName;
+        component.Persistent = false;
+        component.Value.Value = _configuration.CurrentPreset?.ToString() ?? "";
+
+        if (!attached) return;
+        component.Value.OnValueChange += OnPresetChanged;
+    }
+
+    private static void OnPresetChanged(SyncField<string> syncField)
+    {
+        try
+        {
+            var presetType = (PresetType)Enum.Parse(typeof(PresetType), syncField.Value);
+            if ((int)presetType >= PresetTypes.Max || (int)presetType < 0) throw new OverflowException();
+            RestrainiteMod.Configuration.CurrentPreset = presetType;
+        }
+        catch (Exception ex) when (ex is ArgumentNullException or ArgumentException or OverflowException)
+        {
+            syncField.Slot.RunInUpdates(0,
+                () => syncField.Value = RestrainiteMod.Configuration.CurrentPreset?.ToString() ?? "");
+        }
     }
 
     private static void CreateComponents(Slot restrainiteSlot, PreventionType preventionType)
@@ -132,22 +165,23 @@ internal class RestrictionStateOutput
         var slot = restrainiteSlot.FindChildOrAdd(expandedName, false);
         slot.Tag = $"{DynamicVariableSpaceSync.DynamicVariableSpaceName}/{expandedName}";
 
-        var component = GetComponentOrCreate(preventionType, slot, $"{DynamicVariableSpaceStatusName}/{expandedName}");
+        var component = GetComponentOrCreate(preventionType, slot,
+            $"{DynamicVariableSpaceStatusName}/{expandedName}",
+            out var attached);
+
+        if (!attached) return;
         Action<PreventionType, bool> onUpdate = (type, value) =>
         {
-            if (preventionType == type)
-            {
-                restrainiteSlot.RunInUpdates(0, () => component.Value.Value = value);
-            }
+            if (preventionType == type) restrainiteSlot.RunInUpdates(0, () => component.Value.Value = value);
         };
         RestrainiteMod.OnRestrictionChanged += onUpdate;
         component.Disposing += _ => { RestrainiteMod.OnRestrictionChanged -= onUpdate; };
     }
 
     private static DynamicValueVariable<bool> GetComponentOrCreate(PreventionType preventionType, Slot slot,
-        string nameWithPrefix)
+        string nameWithPrefix, out bool attached)
     {
-        var component = slot.GetComponentOrAttach<DynamicValueVariable<bool>>(out var attached,
+        var component = slot.GetComponentOrAttach<DynamicValueVariable<bool>>(out attached,
             search => nameWithPrefix.Equals(search.VariableName.Value));
 
         component.VariableName.Value = nameWithPrefix;

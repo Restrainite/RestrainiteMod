@@ -20,4 +20,6 @@ internal static class PresetTypes
 {
     internal static readonly IEnumerable<PresetType> List =
         Enum.GetValues(typeof(PresetType)).Cast<PresetType>();
+
+    internal static readonly int Max = (int)List.Max() + 1;
 }
