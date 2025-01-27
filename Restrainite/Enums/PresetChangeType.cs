@@ -2,12 +2,12 @@ namespace Restrainite.Enums;
 
 internal enum PresetChangeType
 {
-    None,
-    All,
-    DoNotChange,
-    StoredPresetAlpha,
-    StoredPresetBeta,
-    StoredPresetGamma,
-    StoredPresetDelta,
-    StoredPresetOmega
+    None = PresetType.None,
+    DoNotChange = PresetType.Customized,
+    StoredPresetAlpha = PresetType.StoredPresetAlpha,
+    StoredPresetBeta = PresetType.StoredPresetBeta,
+    StoredPresetGamma = PresetType.StoredPresetGamma,
+    StoredPresetDelta = PresetType.StoredPresetDelta,
+    StoredPresetOmega = PresetType.StoredPresetOmega,
+    All = PresetType.All
 }

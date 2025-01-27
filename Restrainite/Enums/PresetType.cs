@@ -7,13 +7,13 @@ namespace Restrainite.Enums;
 internal enum PresetType
 {
     None,
-    All,
     Customized,
     StoredPresetAlpha,
     StoredPresetBeta,
     StoredPresetGamma,
     StoredPresetDelta,
-    StoredPresetOmega
+    StoredPresetOmega,
+    All
 }
 
 internal static class PresetTypes
