@@ -48,7 +48,8 @@ internal enum PreventionType
     AllowTouchingBySlotTags,
     DenyTouchingBySlotTags,
     PreventNonDashUserspaceInteraction,
-    DisableNameplates
+    DisableNameplates,
+    MovementSpeedMultiplier
 }
 
 internal static class PreventionTypes
@@ -73,5 +74,14 @@ internal static class PreventionTypes
     internal static bool TryParsePreventionType(this string preventionTypeString, out PreventionType preventionType)
     {
         return NameToPreventionType.TryGetValue(preventionTypeString, out preventionType);
+    }
+
+    internal static bool IsFloatType(this PreventionType type)
+    {
+        return type switch
+        {
+            PreventionType.MovementSpeedMultiplier => true,
+            _ => false
+        };
     }
 }

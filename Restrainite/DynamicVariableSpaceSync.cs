@@ -19,14 +19,23 @@ internal class DynamicVariableSpaceSync
     private static readonly List<DynamicVariableSpaceSync> Spaces = [];
 
     private static readonly BitArray GlobalState = new(PreventionTypes.Max, false);
+    private static readonly List<float> LowestFloatState = new(PreventionTypes.Max);
 
     private readonly WeakReference<DynamicVariableSpace> _dynamicVariableSpace;
 
+    private readonly List<float> _localFloatValues = new(PreventionTypes.Max);
+
     private readonly BitArray _localState = new(PreventionTypes.Max, false);
+
+    static DynamicVariableSpaceSync()
+    {
+        for (var i = 0; i < PreventionTypes.Max; i++) LowestFloatState.Add(float.NaN);
+    }
 
     private DynamicVariableSpaceSync(DynamicVariableSpace dynamicVariableSpace)
     {
         _dynamicVariableSpace = new WeakReference<DynamicVariableSpace>(dynamicVariableSpace);
+        for (var i = 0; i < PreventionTypes.Max; i++) _localFloatValues.Add(float.NaN);
     }
 
     private bool Equals(DynamicVariableSpace dynamicVariableSpace)
@@ -41,9 +50,23 @@ internal class DynamicVariableSpaceSync
         return _localState[(int)preventionType];
     }
 
+    private float GetLocalFloat(PreventionType preventionType)
+    {
+        return _localFloatValues[(int)preventionType];
+    }
+
     internal void UpdateLocalState(PreventionType preventionType, bool value)
     {
         UpdateLocalStateInternal(preventionType, IsActiveForLocalUser(preventionType) && value);
+    }
+
+    internal void UpdateLocalFloatState(PreventionType preventionType, float value)
+    {
+        if (!preventionType.IsFloatType() || _localFloatValues[(int)preventionType] == value) return;
+        _localFloatValues[(int)preventionType] = value;
+        ResoniteMod.Msg($"Local Float of {preventionType} changed to {value}.");
+
+        UpdateGlobalState(preventionType);
     }
 
     private void UpdateLocalStateInternal(PreventionType preventionType, bool value)
@@ -59,10 +82,18 @@ internal class DynamicVariableSpaceSync
     {
         var globalState = CalculateGlobalState(preventionType);
 
-        if (GetGlobalState(preventionType) == globalState) return;
-        GlobalState[(int)preventionType] = globalState;
-        ResoniteMod.Msg($"Value of {preventionType.ToExpandedString()} changed to {globalState}");
-        NotifyGlobalStateChange(preventionType, globalState);
+        if (GetGlobalState(preventionType) != globalState)
+        {
+            GlobalState[(int)preventionType] = globalState;
+            ResoniteMod.Msg($"Value of {preventionType.ToExpandedString()} changed to {globalState}");
+            NotifyGlobalStateChange(preventionType, globalState);
+        }
+
+        if (!preventionType.IsFloatType()) return;
+        var lowestFloat = CalculateLowestFloatState(preventionType);
+        if (GetLowestGlobalFloat(preventionType) == lowestFloat) return;
+        LowestFloatState[(int)preventionType] = lowestFloat;
+        ResoniteMod.Msg($"Float Value of {preventionType.ToExpandedString()} changed to {lowestFloat}");
     }
 
     private static bool CalculateGlobalState(PreventionType preventionType)
@@ -71,6 +102,24 @@ internal class DynamicVariableSpaceSync
         lock (Spaces)
         {
             globalState = Spaces.FindIndex(space => space.GetLocalState(preventionType)) != -1;
+        }
+
+        return globalState;
+    }
+
+    private static float CalculateLowestFloatState(PreventionType preventionType)
+    {
+        var globalState = float.NaN;
+        lock (Spaces)
+        {
+            foreach (var space in Spaces)
+            {
+                if (!space.GetLocalState(preventionType)) continue;
+                var local = space.GetLocalFloat(preventionType);
+                if (float.IsNaN(local)) continue;
+                if (float.IsNaN(globalState)) globalState = local;
+                else if (local < globalState) globalState = local;
+            }
         }
 
         return globalState;
@@ -277,5 +326,10 @@ internal class DynamicVariableSpaceSync
         }
 
         dynamicVariableSpaceToRemove?.UpdateAllGlobalStates();
+    }
+
+    public static float GetLowestGlobalFloat(PreventionType preventionType)
+    {
+        return LowestFloatState[(int)preventionType];
     }
 }

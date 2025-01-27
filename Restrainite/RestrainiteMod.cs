@@ -39,7 +39,9 @@ public class RestrainiteMod : ResoniteMod
      */
     public override IncompatibleConfigurationHandlingOption HandleIncompatibleConfigurationVersions(
         Version serializedVersion, Version definedVersion)
-        => IncompatibleConfigurationHandlingOption.CLOBBER;
+    {
+        return IncompatibleConfigurationHandlingOption.CLOBBER;
+    }
 
     public override void OnEngineInit()
     {
@@ -83,5 +85,10 @@ public class RestrainiteMod : ResoniteMod
             Msg($"State of {preventionType.ToExpandedString()} changed to {value}");
             OnRestrictionChanged?.Invoke(preventionType, value);
         });
+    }
+
+    internal static float GetLowestFloat(PreventionType preventionType)
+    {
+        return DynamicVariableSpaceSync.GetLowestGlobalFloat(preventionType);
     }
 }
