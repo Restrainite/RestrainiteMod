@@ -5,6 +5,7 @@ using System.Linq;
 using FrooxEngine;
 using ResoniteModLoader;
 using Restrainite.Enums;
+using SkyFrost.Base;
 
 namespace Restrainite;
 
@@ -259,11 +260,18 @@ internal class Configuration
 
         if (preventionType.HasValue && !IsPreventionTypeEnabled(preventionType.Value)) return false;
 
+        if (IsLocalHome(world) || IsLocalHome(world?.WorldManager.FocusedWorld)) return false;
+        
         return world == world?.WorldManager.FocusedWorld ||
                world == Userspace.UserspaceWorld ||
                (
                    !(_config?.GetValue(_allowRestrictionsFromFocusedWorldOnly) ?? true) &&
                    GetWorldPresetChangeType(world) != PresetChangeType.None
                );
+    }
+
+    private static bool IsLocalHome(World? world)
+    {
+        return IdUtil.GetOwnerType(world?.CorrespondingRecord?.OwnerId) == OwnerType.Machine;
     }
 }

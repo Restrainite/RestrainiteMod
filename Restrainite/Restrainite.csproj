@@ -42,6 +42,9 @@
         <WarningLevel>4</WarningLevel>
     </PropertyGroup>
     <ItemGroup>
+        <Reference Include="FrooxEngine.Store">
+          <HintPath>D:\SteamLibrary\steamapps\common\Resonite\Resonite_Data\Managed\FrooxEngine.Store.dll</HintPath>
+        </Reference>
         <Reference Include="SkyFrost.Base.Models">
             <HintPath>$(ResonitePath)Resonite_Data\Managed\SkyFrost.Base.Models.dll</HintPath>
         </Reference>
