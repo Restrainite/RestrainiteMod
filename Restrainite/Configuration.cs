@@ -37,6 +37,10 @@ internal class Configuration
         "Send a dynamic impulse to the user root slot every time a restriction is activated or deactivated.",
         () => true);
 
+    private readonly ModConfigurationKey<bool> _hasSeenAllPresetWarning = new(
+        "Seen All preset warning",
+        string.Empty, () => false, true);
+
 
     private ModConfiguration? _config;
 
@@ -86,6 +90,7 @@ internal class Configuration
 
         builder.Key(_allowRestrictionsFromFocusedWorldOnly);
         builder.Key(_sendDynamicImpulses);
+        builder.Key(_hasSeenAllPresetWarning);
     }
 
     public void Init(ModConfiguration? config)
@@ -196,6 +201,18 @@ internal class Configuration
             if (_config?.GetValue(configurationKey) == preventionTypeValue) continue;
             _config?.Set(configurationKey, preventionTypeValue);
             ResoniteMod.Msg($"{preventionType.ToExpandedString()} set to {preventionTypeValue}.");
+        }
+
+        if (selectedPreset == PresetType.All && (!_config?.GetValue(_hasSeenAllPresetWarning) ?? false))
+        {
+            Userspace.UserspaceWorld.DisplayNotice(
+                "Restrainite warning", 
+                "You have activated the 'All' preset in Restrainite. Using this preset is <u>highly discouraged" +
+                "</u>, unless you are intimately familiar with all the possible ways you could end up in an " +
+                "undesirable, restricted state.\n\nPlease consider using <b>stored presets</b> and only allowing " +
+                "restriction types you are comfortable with. </i>This is the only time you will see this message.</i>",
+                OfficialAssets.Graphics.Icons.General.ExclamationPoint);
+            _config?.Set(_hasSeenAllPresetWarning, true);
         }
     }
 
