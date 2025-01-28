@@ -206,11 +206,12 @@ internal class Configuration
         if (selectedPreset == PresetType.All && (!_config?.GetValue(_hasSeenAllPresetWarning) ?? false))
         {
             Userspace.UserspaceWorld.DisplayNotice(
-                "Restrainite warning", 
-                "You have activated the 'All' preset in Restrainite. Using this preset is <u>highly discouraged" +
-                "</u>, unless you are intimately familiar with all the possible ways you could end up in an " +
-                "undesirable, restricted state.\n\nPlease consider using <b>stored presets</b> and only allowing " +
-                "restriction types you are comfortable with. </i>This is the only time you will see this message.</i>",
+                "Restrainite Warning", 
+                "You have activated the 'All' preset in Restrainite. Using this preset is <u>discouraged" +
+                "</u>, unless you are familiar with all the ways you could end up in an " +
+                "undesirable, restricted state.\n\nPlease read the documentation on <i>restrainite.github.io</i>. "+
+                "Consider using <b>stored presets</b> and only allowing " +
+                "restriction types you are comfortable with.\n<i>This is the only time you will see this message.</i>",
                 OfficialAssets.Graphics.Icons.General.ExclamationPoint);
             _config?.Set(_hasSeenAllPresetWarning, true);
         }
