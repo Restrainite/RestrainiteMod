@@ -49,7 +49,8 @@ internal enum PreventionType
     DenyTouchingBySlotTags,
     PreventNonDashUserspaceInteraction,
     DisableNameplates,
-    MovementSpeedMultiplier
+    MovementSpeedMultiplier,
+    MaximumLaserDistance
 }
 
 internal static class PreventionTypes
@@ -80,7 +81,7 @@ internal static class PreventionTypes
     {
         return type switch
         {
-            PreventionType.MovementSpeedMultiplier => true,
+            PreventionType.MovementSpeedMultiplier or PreventionType.MaximumLaserDistance => true,
             _ => false
         };
     }
