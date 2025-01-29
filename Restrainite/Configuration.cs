@@ -21,9 +21,21 @@ internal class Configuration
 
     private readonly Dictionary<PreventionType, ModConfigurationKey<bool>> _displayedPreventionTypes = new();
 
+    private readonly ModConfigurationKey<bool> _hasSeenAllPresetWarning = new(
+        "Seen All preset warning",
+        string.Empty, () => false, true);
+
+    private readonly ModConfigurationKey<string> _password = new(
+        "Password",
+        "Select a password (not secret), that should be present in the Restrainite Dynamic Variable Space. ",
+        () => string.Empty);
+
     private readonly ModConfigurationKey<PresetType> _presetConfig = new("Preset",
         "Select a preset",
         () => PresetType.None);
+
+    private readonly ModConfigurationKey<Dictionary<string, string>> _presetPasswords = new(
+        "Preset Passwords", string.Empty, () => [], true);
 
     private readonly ModConfigurationKey<PresetChangeType> _presetStartupConfig = new(
         "Preset on Startup",
@@ -36,10 +48,6 @@ internal class Configuration
         "Send dynamic impulses",
         "Send a dynamic impulse to the user root slot every time a restriction is activated or deactivated.",
         () => true);
-
-    private readonly ModConfigurationKey<bool> _hasSeenAllPresetWarning = new(
-        "Seen All preset warning",
-        string.Empty, () => false, true);
 
 
     private ModConfiguration? _config;
@@ -59,6 +67,8 @@ internal class Configuration
         set => _config?.Set(_presetConfig, value);
     }
 
+    internal bool RequiresPassword { get; private set; }
+
     internal event Action? ShouldRecheckPermissions;
 
     public void DefineConfiguration(ModConfigurationDefinitionBuilder builder)
@@ -77,6 +87,9 @@ internal class Configuration
             builder.Key(key);
             _displayedPreventionTypes.Add(preventionType, key);
         }
+
+        builder.Key(_password);
+        builder.Key(_presetPasswords);
 
         foreach (var worldPermissionType in WorldPermissionTypes.List)
         {
@@ -105,6 +118,8 @@ internal class Configuration
 
         foreach (var key in _presetStore.Values)
             key.OnChanged += _ => ShouldRecheckPermissions?.Invoke();
+
+        _password.OnChanged += UpdatePasswordState;
 
         foreach (var key in _changeOnWorldPermissionChangeDict.Values)
             key.OnChanged += _ => ShouldRecheckPermissions?.Invoke();
@@ -203,13 +218,22 @@ internal class Configuration
             ResoniteMod.Msg($"{preventionType.ToExpandedString()} set to {preventionTypeValue}.");
         }
 
+        var passwordPreset = selectedPreset is PresetType.All or PresetType.None
+            ? PresetType.Customized
+            : selectedPreset;
+        if ((_config?.TryGetValue(_presetPasswords, out var presetPasswords) ?? false) &&
+            (presetPasswords?.TryGetValue(passwordPreset.ToString(), out var password) ?? false))
+            _config?.Set(_password, password ?? string.Empty);
+        else
+            _config?.Set(_password, string.Empty);
+
         if (selectedPreset == PresetType.All && (!_config?.GetValue(_hasSeenAllPresetWarning) ?? false))
         {
             Userspace.UserspaceWorld.DisplayNotice(
-                "Restrainite Warning", 
+                "Restrainite Warning",
                 "You have activated the 'All' preset in Restrainite. Using this preset is <u>discouraged" +
                 "</u>, unless you are familiar with all the ways you could end up in an " +
-                "undesirable, restricted state.\n\nPlease read the documentation on <i>restrainite.github.io</i>. "+
+                "undesirable, restricted state.\n\nPlease read the documentation on <i>restrainite.github.io</i>. " +
                 "Consider using <b>stored presets</b> and only allowing " +
                 "restriction types you are comfortable with.\n<i>This is the only time you will see this message.</i>",
                 OfficialAssets.Graphics.Icons.General.ExclamationPoint);
@@ -297,5 +321,34 @@ internal class Configuration
     private static bool IsLocalHome(World? world)
     {
         return IdUtil.GetOwnerType(world?.CorrespondingRecord?.OwnerId) == OwnerType.Machine;
+    }
+
+    internal bool IsCorrectPassword(string? passwordToCheck)
+    {
+        // If no password is set, we accept any password
+        if (!RequiresPassword ||
+            !(_config?.TryGetValue(_password, out var password) ?? false) ||
+            password == null)
+            return true;
+
+        // Password is set, so compare it
+        return passwordToCheck != null && password.Equals(passwordToCheck);
+    }
+
+    private void UpdatePasswordState(object? value)
+    {
+        var password = value as string ?? string.Empty;
+        RequiresPassword = !string.IsNullOrEmpty(password);
+
+        var presetType = _config?.GetValue(_presetConfig) ?? PresetType.Customized;
+        presetType = presetType is PresetType.All or PresetType.None ? PresetType.Customized : presetType;
+
+        if (!(_config?.TryGetValue(_presetPasswords, out var presetPasswords) ?? false)
+            || presetPasswords == null)
+            presetPasswords = new Dictionary<string, string>();
+        presetPasswords[presetType.ToString()] = password;
+        _config?.Set(_presetPasswords, presetPasswords);
+
+        ShouldRecheckPermissions?.Invoke();
     }
 }

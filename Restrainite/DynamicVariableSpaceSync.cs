@@ -15,6 +15,8 @@ internal class DynamicVariableSpaceSync
     internal const string DynamicVariableSpaceName = "Restrainite";
     private const string TargetUserVariableName = "Target User";
     private const string FullTargetUserVariableName = $"{DynamicVariableSpaceName}/{TargetUserVariableName}";
+    private const string PasswordVariableName = "Password";
+    private const string FullPasswordVariableName = $"{DynamicVariableSpaceName}/{PasswordVariableName}";
 
     private static readonly List<DynamicVariableSpaceSync> Spaces = [];
 
@@ -213,6 +215,9 @@ internal class DynamicVariableSpaceSync
         foreach (var dynamicReferenceVariable in
                  dynamicVariableSpace.Slot.GetComponents<DynamicReferenceVariable<User>>())
             ComponentAdded(dynamicReferenceVariable);
+        foreach (var dynamicValueVariable in
+                 dynamicVariableSpace.Slot.GetComponents<DynamicValueVariable<string>>())
+            ComponentAdded(dynamicValueVariable);
         UpdateAllGlobalStates();
     }
 
@@ -223,8 +228,15 @@ internal class DynamicVariableSpaceSync
         foreach (var dynamicReferenceVariable in
                  dynamicVariableSpace.Slot.GetComponents<DynamicReferenceVariable<User>>())
         {
-            dynamicReferenceVariable.VariableName.OnValueChange -= OnUserVariableNameUpdate;
+            dynamicReferenceVariable.VariableName.OnValueChange -= OnVariableNameUpdate;
             dynamicReferenceVariable.Reference.OnTargetChange -= OnUserRefUpdate;
+        }
+
+        foreach (var dynamicValueVariable in
+                 dynamicVariableSpace.Slot.GetComponents<DynamicValueVariable<string>>())
+        {
+            dynamicValueVariable.VariableName.OnValueChange -= OnVariableNameUpdate;
+            dynamicValueVariable.Value.OnValueChange -= OnStringValueChange;
         }
 
         UpdateAllGlobalStates();
@@ -237,26 +249,55 @@ internal class DynamicVariableSpaceSync
 
     private void ComponentAdded(Component component)
     {
-        if (component is not DynamicReferenceVariable<User> dynamicReferenceVariable) return;
-
-        dynamicReferenceVariable.VariableName.OnValueChange += OnUserVariableNameUpdate;
-        if (TargetUserVariableName.Equals(dynamicReferenceVariable.VariableName.Value) ||
-            FullTargetUserVariableName.Equals(dynamicReferenceVariable.VariableName.Value))
-            OnUserVariableNameUpdate(dynamicReferenceVariable.VariableName);
+        switch (component)
+        {
+            case DynamicReferenceVariable<User> dynamicReferenceVariable:
+            {
+                dynamicReferenceVariable.VariableName.OnValueChange += OnVariableNameUpdate;
+                if (TargetUserVariableName.Equals(dynamicReferenceVariable.VariableName.Value) ||
+                    FullTargetUserVariableName.Equals(dynamicReferenceVariable.VariableName.Value))
+                    OnVariableNameUpdate(dynamicReferenceVariable.VariableName);
+                break;
+            }
+            case DynamicValueVariable<string> dynamicValueVariable:
+            {
+                dynamicValueVariable.VariableName.OnValueChange += OnVariableNameUpdate;
+                if (PasswordVariableName.Equals(dynamicValueVariable.VariableName.Value) ||
+                    FullPasswordVariableName.Equals(dynamicValueVariable.VariableName.Value))
+                    OnVariableNameUpdate(dynamicValueVariable.VariableName);
+                break;
+            }
+        }
     }
 
-    private void OnUserVariableNameUpdate(SyncField<string> syncField)
+    private void OnVariableNameUpdate(SyncField<string> syncField)
     {
         var component = syncField.Component;
-        if (component is not DynamicReferenceVariable<User> dynamicReferenceVariable) return;
+        switch (component)
+        {
+            case DynamicReferenceVariable<User> dynamicReferenceVariable:
+            {
+                if (TargetUserVariableName.Equals(syncField.Value) ||
+                    FullTargetUserVariableName.Equals(syncField.Value))
+                    dynamicReferenceVariable.Reference.OnTargetChange += OnUserRefUpdate;
+                else
+                    dynamicReferenceVariable.Reference.OnTargetChange -= OnUserRefUpdate;
 
-        if (TargetUserVariableName.Equals(syncField.Value) ||
-            FullTargetUserVariableName.Equals(syncField.Value))
-            dynamicReferenceVariable.Reference.OnTargetChange += OnUserRefUpdate;
-        else
-            dynamicReferenceVariable.Reference.OnTargetChange -= OnUserRefUpdate;
+                OnUserRefUpdate(dynamicReferenceVariable.Reference);
+                break;
+            }
+            case DynamicValueVariable<string> dynamicValueVariable:
+            {
+                if (PasswordVariableName.Equals(syncField.Value) ||
+                    FullPasswordVariableName.Equals(syncField.Value))
+                    dynamicValueVariable.Value.OnValueChange += OnStringValueChange;
+                else
+                    dynamicValueVariable.Value.OnValueChange -= OnStringValueChange;
 
-        OnUserRefUpdate(dynamicReferenceVariable.Reference);
+                OnStringValueChange(dynamicValueVariable.Value);
+                break;
+            }
+        }
     }
 
     private void OnUserRefUpdate(SyncField<RefID> syncField)
@@ -267,6 +308,18 @@ internal class DynamicVariableSpaceSync
         dynamicReferenceVariable.RunInUpdates(0, () =>
         {
             dynamicReferenceVariable.UpdateLinking();
+            CheckLocalState();
+        });
+    }
+
+    private void OnStringValueChange(SyncField<string> syncField)
+    {
+        if (syncField.Component is not DynamicValueVariable<string> dynamicValueVariable) return;
+
+        // Force refresh value in DynamicVariableSpace Manager 
+        dynamicValueVariable.RunInUpdates(0, () =>
+        {
+            dynamicValueVariable.UpdateLinking();
             CheckLocalState();
         });
     }
@@ -309,7 +362,12 @@ internal class DynamicVariableSpaceSync
             return false;
         var manager = dynamicVariableSpace.GetManager<User>(TargetUserVariableName, false);
         if (manager == null || manager.ReadableValueCount == 0) return false;
-        return manager.Value == dynamicVariableSpace.LocalUser;
+        if (manager.Value != dynamicVariableSpace.LocalUser) return false;
+
+        if (!RestrainiteMod.Configuration.RequiresPassword) return true;
+        var stringManager = dynamicVariableSpace.GetManager<string>(PasswordVariableName, false);
+        if (stringManager == null || stringManager.ReadableValueCount == 0) return false;
+        return RestrainiteMod.Configuration.IsCorrectPassword(stringManager.Value);
     }
 
     public static void Remove(DynamicVariableSpace dynamicVariableSpace)

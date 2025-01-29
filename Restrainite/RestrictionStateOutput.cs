@@ -56,6 +56,8 @@ internal class RestrictionStateOutput
 
         if (restrainiteSlot.World == Userspace.UserspaceWorld) CreatePresetComponent(restrainiteSlot);
 
+        CreatePasswordComponent(restrainiteSlot);
+
         AddOrRemoveComponents(restrainiteSlot);
     }
 
@@ -141,6 +143,16 @@ internal class RestrictionStateOutput
 
         if (!attached) return;
         component.Value.OnValueChange += OnPresetChanged;
+    }
+
+    private void CreatePasswordComponent(Slot restrainiteSlot)
+    {
+        const string passwordName = $"{DynamicVariableSpaceStatusName}/Requires Password";
+        var component = restrainiteSlot.GetComponentOrAttach<DynamicValueVariable<bool>>(
+            search => passwordName.Equals(search.VariableName.Value));
+        component.VariableName.Value = passwordName;
+        component.Persistent = false;
+        component.Value.Value = _configuration.RequiresPassword;
     }
 
     private static void OnPresetChanged(SyncField<string> syncField)
