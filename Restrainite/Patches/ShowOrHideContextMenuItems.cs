@@ -10,7 +10,7 @@ namespace Restrainite.Patches;
 [HarmonyPatch]
 internal class ShowOrHideContextMenuItems
 {
-    private static bool ShouldDisableButton(IWorldElement contextMenuItem, LocaleString label)
+    private static bool ShouldDisableButton(IWorldElement contextMenuItem, LocaleString? label)
     {
         if (RestrainiteMod.IsRestricted(PreventionType.ShowContextMenuItems))
         {
@@ -29,24 +29,28 @@ internal class ShowOrHideContextMenuItems
             if (hidden) return true;
         }
 
-        if (RestrainiteMod.IsRestricted(PreventionType.PreventLaserTouch) &&
-            "Interaction.LaserEnabled".Equals(label.content))
+        if (RestrainiteMod.IsRestricted(PreventionType.PreventLaserTouch) && label is { content: "Interaction.LaserEnabled" })
             return true;
 
         return false;
     }
 
-    private static bool FindInList(IWorldElement element, IImmutableSet<string> items, LocaleString label)
+    private static bool FindInList(IWorldElement element, IImmutableSet<string> items, LocaleString? label)
     {
         foreach (var item in items)
         {
-            if (item.Equals(label.content)) return true;
+            if (label?.content == null)
+            {
+                if (item.Equals("null")) return true;
+                continue;
+            }
+            if (item.Equals(label.Value.content)) return true;
 
             // Special case for locomotion item
-            if (label.isLocaleKey) continue;
+            if (label.Value.isLocaleKey) continue;
             var localized = element.GetLocalized(item);
             if (localized == null) continue;
-            if (label.content.StartsWith(localized)) return true;
+            if (label.Value.content.StartsWith(localized)) return true;
         }
 
         return false;
