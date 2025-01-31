@@ -3,7 +3,7 @@
         <Authors>SnepDrone, Zenuru</Authors>
         <Product>Restrainite</Product>
         <Description>Allows others to control restrictions of the local user</Description>
-        <Version>1.0.0</Version>
+        <Version>1.1.0</Version>
         <Copyright>&#169; 2024-2025 $(Authors)</Copyright>
         <AssemblyVersion>$(Version)</AssemblyVersion>
         <AssemblyTitle>$(Product)</AssemblyTitle>
@@ -43,7 +43,7 @@
     </PropertyGroup>
     <ItemGroup>
         <Reference Include="FrooxEngine.Store">
-          <HintPath>D:\SteamLibrary\steamapps\common\Resonite\Resonite_Data\Managed\FrooxEngine.Store.dll</HintPath>
+            <HintPath>D:\SteamLibrary\steamapps\common\Resonite\Resonite_Data\Managed\FrooxEngine.Store.dll</HintPath>
         </Reference>
         <Reference Include="SkyFrost.Base.Models">
             <HintPath>$(ResonitePath)Resonite_Data\Managed\SkyFrost.Base.Models.dll</HintPath>
@@ -68,7 +68,7 @@
         </Reference>
     </ItemGroup>
     <Target Name="PostBuild" AfterTargets="PostBuildEvent">
-        <Copy SourceFiles="$(OutDir)$(TargetFileName)" DestinationFolder="$(ResonitePath)rml_mods" />
-        <Message Text="Copied $(TargetFileName) to $(ResonitePath)rml_mods" Importance="high" />
+        <Copy SourceFiles="$(OutDir)$(TargetFileName)" DestinationFolder="$(ResonitePath)rml_mods"/>
+        <Message Text="Copied $(TargetFileName) to $(ResonitePath)rml_mods" Importance="high"/>
     </Target>
 </Project>
