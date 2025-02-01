@@ -80,11 +80,7 @@ public class RestrainiteMod : ResoniteMod
      */
     internal static void NotifyRestrictionChanged(World source, PreventionType preventionType, bool value)
     {
-        source.RunInUpdates(0, () =>
-        {
-            Msg($"State of {preventionType.ToExpandedString()} changed to {value}");
-            OnRestrictionChanged?.Invoke(preventionType, value);
-        });
+        source.RunInUpdates(0, () => OnRestrictionChanged?.Invoke(preventionType, value));
     }
 
     internal static float GetLowestFloat(PreventionType preventionType)

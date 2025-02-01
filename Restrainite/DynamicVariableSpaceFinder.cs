@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Reflection;
 using FrooxEngine;
 using HarmonyLib;
-using ResoniteModLoader;
 using Restrainite.Enums;
 
 namespace Restrainite;
@@ -52,8 +51,6 @@ internal static class DynamicVariableSpaceFinder
                 || dynamicVariableSpaceSync == null) return;
             if (!name.TryParsePreventionType(out var preventionType)) return;
 
-            ResoniteMod.Msg($"DynamicVariableSpaceAllocateManagerBoolean found {preventionType}");
-
             var booleanValueManagerWrapper = new ValueManagerWrapper<bool>(name, preventionType, __instance);
             booleanValueManagerWrapper.OnChange += dynamicVariableSpaceSync.UpdateLocalState;
             __result = booleanValueManagerWrapper;
@@ -77,8 +74,6 @@ internal static class DynamicVariableSpaceFinder
             if (!DynamicVariableSpaceSync.UpdateListAndGetIfValid(__instance, out var dynamicVariableSpaceSync)
                 || dynamicVariableSpaceSync == null) return;
             if (!name.TryParsePreventionType(out var preventionType)) return;
-
-            ResoniteMod.Msg($"DynamicVariableSpaceAllocateManagerFloat found {preventionType}");
 
             var booleanValueManagerWrapper = new ValueManagerWrapper<float>(name, preventionType, __instance);
             booleanValueManagerWrapper.OnChange += dynamicVariableSpaceSync.UpdateLocalFloatState;

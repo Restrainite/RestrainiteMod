@@ -28,6 +28,7 @@ internal class DynamicVariableSpaceSync
     private readonly List<float> _localFloatValues = new(PreventionTypes.Max);
 
     private readonly BitArray _localState = new(PreventionTypes.Max, false);
+    private readonly string _refId;
 
     static DynamicVariableSpaceSync()
     {
@@ -37,6 +38,8 @@ internal class DynamicVariableSpaceSync
     private DynamicVariableSpaceSync(DynamicVariableSpace dynamicVariableSpace)
     {
         _dynamicVariableSpace = new WeakReference<DynamicVariableSpace>(dynamicVariableSpace);
+        var user = dynamicVariableSpace.World.GetUserByAllocationID(dynamicVariableSpace.ReferenceID.User);
+        _refId = $"Dynamic Variable Space {dynamicVariableSpace.ReferenceID} created by {user?.UserID} in {dynamicVariableSpace.World?.Name}";
         for (var i = 0; i < PreventionTypes.Max; i++) _localFloatValues.Add(float.NaN);
     }
 
@@ -64,38 +67,50 @@ internal class DynamicVariableSpaceSync
 
     internal void UpdateLocalFloatState(PreventionType preventionType, float value)
     {
-        if (!preventionType.IsFloatType() || _localFloatValues[(int)preventionType] == value) return;
+        if (!preventionType.IsFloatType() ||
+            (float.IsNaN(_localFloatValues[(int)preventionType]) && float.IsNaN(value)) ||
+            _localFloatValues[(int)preventionType] == value) return;
         _localFloatValues[(int)preventionType] = value;
-        ResoniteMod.Msg($"Local Float of {preventionType} changed to {value}.");
+        var source = Source();
+        ResoniteMod.Msg($"Local Float of {preventionType.ToExpandedString()} changed to {value}. ({source})");
 
-        UpdateGlobalState(preventionType);
+        UpdateGlobalState(preventionType, source);
     }
 
     private void UpdateLocalStateInternal(PreventionType preventionType, bool value)
     {
         if (_localState[(int)preventionType] == value) return;
         _localState[(int)preventionType] = value;
-        ResoniteMod.Msg($"Local State of {preventionType} changed to {value}");
+        var source = Source();
+        ResoniteMod.Msg($"Local State of {preventionType.ToExpandedString()} changed to {value}. ({source})");
 
-        UpdateGlobalState(preventionType);
+        UpdateGlobalState(preventionType, source);
     }
 
-    private void UpdateGlobalState(PreventionType preventionType)
+    private void UpdateGlobalState(PreventionType preventionType, string source)
     {
         var globalState = CalculateGlobalState(preventionType);
 
         if (GetGlobalState(preventionType) != globalState)
         {
             GlobalState[(int)preventionType] = globalState;
-            ResoniteMod.Msg($"Value of {preventionType.ToExpandedString()} changed to {globalState}");
+            ResoniteMod.Msg($"Global State of {preventionType.ToExpandedString()} changed to {globalState}. ({source})");
             NotifyGlobalStateChange(preventionType, globalState);
         }
 
         if (!preventionType.IsFloatType()) return;
         var lowestFloat = CalculateLowestFloatState(preventionType);
-        if (GetLowestGlobalFloat(preventionType) == lowestFloat) return;
+        var currentValue = GetLowestGlobalFloat(preventionType);
+        if (float.IsNaN(currentValue) && float.IsNaN(lowestFloat)) return;
+        if (currentValue == lowestFloat) return;
         LowestFloatState[(int)preventionType] = lowestFloat;
-        ResoniteMod.Msg($"Float Value of {preventionType.ToExpandedString()} changed to {lowestFloat}");
+        ResoniteMod.Msg($"Global Float of {preventionType.ToExpandedString()} changed to {lowestFloat}. ({source})");
+    }
+
+    private string Source()
+    {
+        var found = GetDynamicVariableSpace(out var internalDynamicVariableSpace);
+        return found ? $"{_refId} @{internalDynamicVariableSpace?.Slot?.GlobalPosition}" : _refId;
     }
 
     private static bool CalculateGlobalState(PreventionType preventionType)
@@ -135,7 +150,8 @@ internal class DynamicVariableSpaceSync
 
     private void UpdateAllGlobalStates()
     {
-        foreach (var preventionType in PreventionTypes.List) UpdateGlobalState(preventionType);
+        var source = Source();
+        foreach (var preventionType in PreventionTypes.List) UpdateGlobalState(preventionType, source);
     }
 
     internal static bool GetGlobalState(PreventionType preventionType)

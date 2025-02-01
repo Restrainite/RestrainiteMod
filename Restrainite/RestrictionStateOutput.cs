@@ -47,7 +47,8 @@ internal class RestrictionStateOutput
         if (userSlot.IsDestroyed || userSlot.IsDestroying) return;
         CreateDynamicVariableSpace();
 
-        ResoniteMod.Msg($"Adding Restrainite slot to {_userSlot}");
+        ResoniteMod.Msg($"Adding Restrainite slot to {userSlot.Name} {userSlot.ReferenceID} " +
+                        $"in {userSlot.Parent?.Name} {userSlot.World?.Name}");
         DeleteOldSlotIfMoved();
         var restrainiteSlot = userSlot.FindChildOrAdd(RestrainiteRootSlotName, false);
         _oldSlot = new WeakReference<Slot>(restrainiteSlot);
@@ -73,7 +74,8 @@ internal class RestrictionStateOutput
     private void CreateDynamicVariableSpace()
     {
         if (!_userSlot.TryGetTarget(out var userSlot)) return;
-        ResoniteMod.Msg($"Adding Restrainite DynamicVariableSpace to {_userSlot}");
+        ResoniteMod.Msg($"Adding Restrainite DynamicVariableSpace to {userSlot.Name} {userSlot.ReferenceID} " +
+                        $"in {userSlot.Parent?.Name} {userSlot.World?.Name}");
         var dynamicVariableSpace = userSlot.GetComponentOrAttach<DynamicVariableSpace>(
             component => DynamicVariableSpaceStatusName.Equals(component.CurrentName)
         );
@@ -172,9 +174,15 @@ internal class RestrictionStateOutput
 
     private static void CreateComponents(Slot restrainiteSlot, PreventionType preventionType)
     {
-        ResoniteMod.Msg($"Creating Components for {preventionType} in {restrainiteSlot}");
         var expandedName = preventionType.ToExpandedString();
-        var slot = restrainiteSlot.FindChildOrAdd(expandedName, false);
+        var slot = restrainiteSlot.FindChild(expandedName);
+        if (slot == null)
+        {
+            ResoniteMod.Msg($"Creating Components for {preventionType} in {restrainiteSlot.Name} " +
+                            $"{restrainiteSlot.ReferenceID} in {restrainiteSlot.Parent?.Name} {restrainiteSlot.World?.Name}");
+            slot = restrainiteSlot.AddSlot(expandedName, false);
+        }
+
         slot.Tag = $"{DynamicVariableSpaceSync.DynamicVariableSpaceName}/{expandedName}";
 
         var component = GetComponentOrCreate(preventionType, slot,
@@ -204,7 +212,6 @@ internal class RestrictionStateOutput
 
     private static void RemoveComponents(Slot restrainiteSlot, PreventionType preventionType)
     {
-        ResoniteMod.Msg($"Removing Components for {preventionType} in {restrainiteSlot}");
         var expandedName = preventionType.ToExpandedString();
         var oldSlot = restrainiteSlot.FindChild(expandedName);
 
@@ -213,7 +220,8 @@ internal class RestrictionStateOutput
 
         if (oldSlot.ChildrenCount != 0)
         {
-            ResoniteMod.Warn($"Unable to remove slot {oldSlot.Name}, {oldSlot.ChildrenCount}");
+            ResoniteMod.Warn($"Unable to remove slot {oldSlot.Name} {oldSlot.ReferenceID} in " +
+                             $"{oldSlot.Parent?.Name} {oldSlot.World?.Name}, too many children: {oldSlot.ChildrenCount}");
             return;
         }
 
@@ -224,9 +232,13 @@ internal class RestrictionStateOutput
 
         if (oldSlot.ComponentCount != 0)
         {
-            ResoniteMod.Warn($"Unable to remove slot {oldSlot.Name}, {oldSlot.ComponentCount}");
+            ResoniteMod.Warn($"Unable to remove slot {oldSlot.Name} {oldSlot.ReferenceID} in " +
+                             $"{oldSlot.Parent?.Name} {oldSlot.World?.Name}, too many components: {oldSlot.ComponentCount}");
             return;
         }
+
+        ResoniteMod.Msg($"Removing Components for {preventionType} in {restrainiteSlot.Name} " +
+                        $"{restrainiteSlot.ReferenceID} in {restrainiteSlot.Parent?.Name} {restrainiteSlot.World?.Name}");
 
         oldSlot.Destroy(true);
     }

@@ -64,7 +64,10 @@ internal class Configuration
     internal PresetType? CurrentPreset
     {
         get => _config?.GetValue(_presetConfig);
-        set => _config?.Set(_presetConfig, value);
+        set
+        {
+            if (value != null && _config?.GetValue(_presetConfig) != value) _config?.Set(_presetConfig, value);
+        }
     }
 
     internal bool RequiresPassword { get; private set; }
@@ -117,41 +120,43 @@ internal class Configuration
         if (presetOnStartup != PresetChangeType.DoNotChange) _config?.Set(_presetConfig, (PresetType)presetOnStartup);
 
         foreach (var key in _presetStore.Values)
-            key.OnChanged += _ => ShouldRecheckPermissions?.Invoke();
+            key.OnChanged += ShouldRecheckPermissionInvoker;
 
         _password.OnChanged += UpdatePasswordState;
 
         foreach (var key in _changeOnWorldPermissionChangeDict.Values)
-            key.OnChanged += _ => ShouldRecheckPermissions?.Invoke();
+            key.OnChanged += ShouldRecheckPermissionInvoker;
 
-        _presetConfig.OnChanged += _ => ShouldRecheckPermissions?.Invoke();
-        _allowRestrictionsFromFocusedWorldOnly.OnChanged += _ => ShouldRecheckPermissions?.Invoke();
+        _presetConfig.OnChanged += ShouldRecheckPermissionInvoker;
+        _allowRestrictionsFromFocusedWorldOnly.OnChanged += ShouldRecheckPermissionInvoker;
 
         _config?.Save(true);
+    }
+
+    private void ShouldRecheckPermissionInvoker(object? _)
+    {
+        ShouldRecheckPermissions?.Invoke();
     }
 
     private ModConfigurationKey.OnChangedHandler OnPreventionTypeConfigChanged(PreventionType preventionType)
     {
         return value =>
         {
-            ResoniteMod.Msg($"Config for {preventionType} changed to {value}.");
             var boolValue = value as bool? ?? false;
             var presetType = _config?.GetValue(_presetConfig) ?? PresetType.Customized;
             switch (presetType)
             {
                 case PresetType.None when !boolValue:
-                    ResoniteMod.Msg($"Config for {preventionType} changed {presetType} to {boolValue}.");
                     return;
                 case PresetType.None:
                     SwitchToCustomized(preventionType, true);
-                    ResoniteMod.Msg($"Config for {preventionType} changed {presetType} to {boolValue}.");
+                    ResoniteMod.Msg($"Preset Customized changed {preventionType} to {boolValue}.");
                     return;
                 case PresetType.All when boolValue:
-                    ResoniteMod.Msg($"Config for {preventionType} changed {presetType} to {boolValue}.");
                     return;
                 case PresetType.All:
                     SwitchToCustomized(preventionType, false);
-                    ResoniteMod.Msg($"Config for {preventionType} changed {presetType} to {boolValue}.");
+                    ResoniteMod.Msg($"Preset Customized changed {preventionType} to {boolValue}.");
                     return;
                 case PresetType.Customized:
                 case PresetType.StoredPresetAlpha:
@@ -161,9 +166,10 @@ internal class Configuration
                 case PresetType.StoredPresetOmega:
                 default:
                     var customStored = GetCustomStored(presetType);
+                    if (customStored[(int)preventionType] == boolValue) return;
                     customStored.Set((int)preventionType, boolValue);
                     SetCustomStored(presetType, customStored);
-                    ResoniteMod.Msg($"Config for {preventionType} changed {presetType} to {boolValue}.");
+                    ResoniteMod.Msg($"Preset {presetType} changed {preventionType} to {boolValue}.");
                     return;
             }
         };
@@ -215,7 +221,6 @@ internal class Configuration
             var preventionTypeValue = preventionTypeValues[(int)preventionType];
             if (_config?.GetValue(configurationKey) == preventionTypeValue) continue;
             _config?.Set(configurationKey, preventionTypeValue);
-            ResoniteMod.Msg($"{preventionType.ToExpandedString()} set to {preventionTypeValue}.");
         }
 
         var passwordPreset = selectedPreset is PresetType.All or PresetType.None
