@@ -5,7 +5,7 @@ using Restrainite.Enums;
 namespace Restrainite.Patches;
 
 [HarmonyPatch]
-public class PreventInviteContact
+internal static class PreventInviteContact
 {
     [HarmonyPrefix]
     [HarmonyPatch(typeof(ContactsDialog), "OnInviteContact")]

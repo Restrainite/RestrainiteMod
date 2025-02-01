@@ -277,7 +277,11 @@ internal class Configuration
         switch (changePreset)
         {
             case PresetChangeType.None:
-                if (currentPreset == PresetType.None) return;
+                if (currentPreset == PresetType.None)
+                {
+                    ShouldRecheckPermissions?.Invoke();
+                    return;
+                }
                 _config?.Set(_presetConfig, PresetType.None);
                 return;
             case PresetChangeType.All:
@@ -286,7 +290,11 @@ internal class Configuration
             case PresetChangeType.StoredPresetGamma:
             case PresetChangeType.StoredPresetDelta:
             case PresetChangeType.StoredPresetOmega:
-                if (currentPreset == (PresetType)changePreset) return;
+                if (currentPreset == (PresetType)changePreset)
+                {
+                    ShouldRecheckPermissions?.Invoke();
+                    return;
+                }
                 _config?.Set(_presetConfig, (PresetType)changePreset);
                 return;
             case PresetChangeType.DoNotChange:
