@@ -10,8 +10,8 @@ namespace Restrainite;
 
 internal static class UserRootInjector
 {
-    private static readonly Dictionary<RefID, ImpulseSender> ImpulseSenders = new();
-    private static readonly Dictionary<RefID, RestrictionStateOutput> DynamicVariableStatusMap = new();
+    private static readonly Dictionary<string, ImpulseSender> ImpulseSenders = new();
+    private static readonly Dictionary<string, RestrictionStateOutput> DynamicVariableStatusMap = new();
     private static bool _hasInjectedIntoWorldManager;
     private static readonly FieldInfo UserRootField = AccessTools.Field(typeof(User), "userRoot");
 
@@ -43,10 +43,39 @@ internal static class UserRootInjector
     {
         if (reference.Target == null) return;
 
-        ResoniteMod.Msg($"Restrainite root changed for {reference} {reference.Target.Slot}");
-
         var userRoot = reference.Target;
-        var refId = userRoot.ReferenceID;
+        ResoniteMod.Msg($"Restrainite root changed for {reference} {userRoot.World.InitState} {userRoot.Slot}");
+
+        WaitForWorldToLoad(userRoot);
+    }
+
+    private static void WaitForWorldToLoad(UserRoot userRoot)
+    {
+        if (userRoot.IsDisposed || userRoot.IsDestroyed) return;
+        switch (userRoot.World.InitState)
+        {
+            case World.InitializationState.Finished:
+                AttachToUserRoot(userRoot);
+                return;
+            case World.InitializationState.Failed:
+                return;
+            case World.InitializationState.Created:
+            case World.InitializationState.InitializingNetwork:
+            case World.InitializationState.WaitingForJoinGrant:
+            case World.InitializationState.InitializingDataModel:
+            default:
+                userRoot.RunInUpdates(1, () =>
+                {
+                    WaitForWorldToLoad(userRoot);
+                });
+                return;
+        }
+    }
+
+    private static void AttachToUserRoot(UserRoot userRoot)
+    {
+        ResoniteMod.Msg($"Attaching to UserRoot {userRoot.World.InitState} {userRoot.Slot}");
+        var refId = userRoot.World.SessionId + userRoot.ReferenceID;
 
         if (!ImpulseSenders.ContainsKey(refId))
         {
